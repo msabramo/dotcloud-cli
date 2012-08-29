@@ -95,6 +95,7 @@ class CLI(object):
         self.info('Refreshed OAuth2 token')
         self.global_config.data['token']['access_token'] = res['access_token']
         self.global_config.data['token']['refresh_token'] = res['refresh_token']
+        self.global_config.data['token']['expires_in'] = res['expires_in']
         self.global_config.save()
         return True
 
