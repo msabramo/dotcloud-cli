@@ -1203,14 +1203,6 @@ class CLI(object):
 
     @app_local
     def cmd_logs(self, args):
-        filter_svc = None
-        filter_inst = None
-        if args.service_or_instance:
-            parts = args.service_or_instance.split('.')
-            filter_svc = parts[0]
-            if len(parts) > 1:
-                filter_inst = int(parts[1])
-
         url = '/applications/{0}/logs?stream'.format(
                 args.application)
 
@@ -1220,13 +1212,10 @@ class CLI(object):
         if args.lines is not None:
             url += '&lines={0}'.format(args.lines)
 
-        if filter_svc is not None:
-            url += '&service={0}'.format(filter_svc)
-            if filter_inst is not None:
-                url += '&instance={0}'.format(filter_inst)
+        if args.service_or_instance:
+            url += '&filter={0}'.format(','.join(args.service_or_instance))
 
-        logs_meta, logs = self._stream_formated_logs(url, filter_svc,
-                filter_inst)
+        logs_meta, logs = self._stream_formated_logs(url)
         for log, formated_line, in logs:
             if log.get('partial', False):
                 print formated_line, '\r',
