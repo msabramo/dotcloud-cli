@@ -579,7 +579,7 @@ class CLI(object):
             ('reserved memory',
                 bytes2human(service.get('reserved_memory')) if service.get('reserved_memory') else 'N/A'),
             ('config', service.get('runtime_config').items()),
-            ('URLs', 'N/A' if not service.get('domains') else '')
+            ('URLs', 'N/A' if not service.get('domains') else ' ')
         ])
 
         for domain in service.get('domains'):
