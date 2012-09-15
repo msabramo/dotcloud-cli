@@ -586,12 +586,17 @@ class CLI(object):
             print '  - http://{0}'.format(domain.get('domain'))
 
         for instance in sorted(service.get('instances', []), key=lambda i: i.get('instance_id')):
+            service_revision = instance.get('image_version')
+            image_upgrade = instance.get('image_upgrade')
+            if service_revision and image_upgrade is not None:
+                service_revision += ' ({0})'.format('upgrade available' if image_upgrade else 'latest revision')
             print
             print '=== {0}.{1}'.format(service.get('name'), instance.get('instance_id'))
             pprint_kv([
                 ('datacenter', instance.get('datacenter')),
                 ('host', instance.get('host')),
                 ('container', instance.get('container_name')),
+                ('service revision', service_revision),
                 ('revision', instance.get('revision')),
                 ('ports', [(port.get('name'), port.get('url'))
                     for port in instance.get('ports')
