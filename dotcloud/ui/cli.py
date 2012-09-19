@@ -467,8 +467,8 @@ class CLI(object):
         if args.subcmd == 'list':
             self.info('Environment variables for application {0}'.format(args.application))
             var = self.user.get(url).item
-            for name in sorted(var.keys()):
-                print '='.join((name, var.get(name)))
+            for k, v in sorted(var.items()):
+                print '{0}={1}'.format(k, v)
         elif args.subcmd == 'set':
             self.info('Setting {0} (application {1})'.format(
                 ', '.join(args.variables), args.application))
