@@ -339,6 +339,10 @@ class CLI(object):
 
     def cmd_list(self, args):
         res = self.user.get('/applications')
+        if not res.items:
+            self.info('You don\'t have any application yet, create one with `{0} create`'.format(self.cmd))
+            return
+
         padding = max([len(app['name']) for app in res.items]) + 2
         for app in sorted(res.items, key=lambda x: x['name']):
             if app['name'] == args.application:
