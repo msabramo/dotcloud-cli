@@ -633,7 +633,7 @@ class CLI(object):
             return
 
         services_table = [
-            ['name', 'type', 'instances', 'reserved memory']
+            ['name', 'type', 'containers', 'reserved memory']
         ]
 
         for service in sorted(services, key=lambda s: s.get('name')):
