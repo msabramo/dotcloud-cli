@@ -933,7 +933,7 @@ class CLI(object):
             s = s.replace(c, '\\' + c)
         return s
 
-    def parse_service_instance(self, service_or_instance):
+    def parse_service_instance(self, service_or_instance, command):
         if '.' not in service_or_instance:
             self.die('You must specify a service and instance, e.g. "www.0"')
         service_name, instance_id = service_or_instance.split('.', 1)
@@ -944,12 +944,15 @@ class CLI(object):
             if instance_id < 0:
                 raise ValueError('value should be >= 0')
         except ValueError as e:
-            self.die('Unable to parse instance number: {0}'.format(e))
+            self.error('Invalid service instance identifier: {0}'.format(service_or_instance))
+            self.info('Did you mean `{0} {1} -A {2} {3}` ?'.format(self.cmd, command, service_name, instance_id))
+            self.die()
+
         return service_name, instance_id
 
     def get_ssh_endpoint(self, args):
         if '.' in args.service_or_instance:
-            service_name, instance_id = self.parse_service_instance(args.service_or_instance)
+            service_name, instance_id = self.parse_service_instance(args.service_or_instance, args.cmd)
         else:
             service_name, instance_id = (args.service_or_instance, None)
 
@@ -1027,7 +1030,7 @@ class CLI(object):
     @app_local
     def cmd_restart(self, args):
         # FIXME: Handle --all?
-        service_name, instance_id = self.parse_service_instance(args.instance)
+        service_name, instance_id = self.parse_service_instance(args.instance, args.cmd)
 
         url = '/applications/{0}/services/{1}/instances/{2}/status' \
             .format(args.application, service_name, instance_id)
