@@ -100,25 +100,31 @@ class CLI(object):
         return True
 
     def run(self, args):
-        p = get_parser(self.cmd)
-        args = p.parse_args(args)
-        if not self.global_config.loaded and args.cmd != 'setup':
-            self.die('Not configured yet. Please run "{0} setup"'.format(self.cmd))
-        self.load_local_config(args)
-        cmd = 'cmd_{0}'.format(args.cmd)
-        if not hasattr(self, cmd):
-            raise NotImplementedError('cmd not implemented: "{0}"'.format(cmd))
         try:
-            return getattr(self, cmd)(args)
-        except AuthenticationNotConfigured:
-            self.error('Authentication is not configured. Please run `{0} setup`'.format(self.cmd))
-        except RESTAPIError, e:
-            handler = self.error_handlers.get(e.code, self.default_error_handler)
-            handler(e)
-        except KeyboardInterrupt:
-            pass
-        except urllib2.URLError as e:
-            self.error('Accessing dotCloud API failed: {0}'.format(str(e)))
+            p = get_parser(self.cmd)
+            args = p.parse_args(args)
+            if not self.global_config.loaded and args.cmd != 'setup':
+                self.die('Not configured yet. Please run "{0} setup"'.format(self.cmd))
+            self.load_local_config(args)
+            cmd = 'cmd_{0}'.format(args.cmd)
+            if not hasattr(self, cmd):
+                raise NotImplementedError('cmd not implemented: "{0}"'.format(cmd))
+            try:
+                return getattr(self, cmd)(args)
+            except AuthenticationNotConfigured:
+                self.error('Authentication is not configured. Please run `{0} setup`'.format(self.cmd))
+            except RESTAPIError, e:
+                handler = self.error_handlers.get(e.code, self.default_error_handler)
+                handler(e)
+            except KeyboardInterrupt:
+                pass
+            except urllib2.URLError as e:
+                self.error('Accessing dotCloud API failed: {0}'.format(str(e)))
+        except Exception, e:
+            self.error('An unexpected error has occured:\n  {exc}.\n'
+                 'Please contact support@dotcloud.com if the problem persists.'.format(exc=e))
+            return 1
+
 
     def _parse_version(self, s):
         if not s:
