@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from .debug import global_endpoint_info
 from .parser import get_parser
 from .version import VERSION
 from .config import GlobalConfig, CLIENT_KEY, CLIENT_SECRET
@@ -121,8 +122,18 @@ class CLI(object):
             except urllib2.URLError as e:
                 self.error('Accessing dotCloud API failed: {0}'.format(str(e)))
         except Exception, e:
-            self.error('An unexpected error has occured:\n  {exc}.\n'
-                 'Please contact support@dotcloud.com if the problem persists.'.format(exc=e))
+            message = 'An unexpected error has occured: {exc}.\n'.format(exc=e)
+            if global_endpoint_info:
+                message += ('The remote server handling the last request was '
+                            '{remotehost}:{remoteport}.\n'
+                            'The {timesource} timestamp was {timestamp}.\n'
+                            .format(**global_endpoint_info))
+            else:
+                message += ('It looks like we could not establish an healthy '
+                            'TCP connection to any of the API endpoints.\n')
+            message += ('Please try again; and if the problem persists, '
+                        'contact support@dotcloud.com with this information.')
+            self.error(message)
             return 1
 
 
