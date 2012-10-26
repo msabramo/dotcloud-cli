@@ -93,6 +93,9 @@ class RESTClient(object):
             pass
         elif res.status_code == requests.codes.no_content:
             return BaseResponse.create(res=res, trace_id=trace_id)
+        elif res.status_code == requests.codes.im_a_teapot:
+            raise RESTAPIError(code=requests.codes.im_a_teapot, desc='The API is currently in maintenance mode.'
+                ' Please try again later and check http://status.dotcloud.com for more information.')
         else:
             raise RESTAPIError(code=requests.codes.server_error,
                                desc='Server responded with unsupported ' \

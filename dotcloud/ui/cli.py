@@ -47,6 +47,7 @@ class CLI(object):
             401: self.error_authen,
             403: self.error_authz,
             404: self.error_not_found,
+            418: self.error_maintenance,
             422: self.error_unprocessable,
             500: self.error_server,
         }
@@ -300,6 +301,9 @@ class CLI(object):
             .format('and mention Trace ID "{0}"'.format(e.trace_id)
                 if e.trace_id else ''))
         self.die()
+
+    def error_maintenance(self, e):
+        self.die('{0}'.format(e.desc))
 
     def cmd_check(self, args):
         # TODO Check ~/.dotcloud stuff
@@ -1196,14 +1200,6 @@ class CLI(object):
 
         self.error('The connection was lost, ' \
                 'but the deployment is still running in the background.')
-        if global_endpoint_info:
-            self.error('The remote server handling the last request was '
-                '{remotehost}:{remoteport}.\n'
-                'The {timesource} timestamp was {timestamp}.\n'
-                .format(**global_endpoint_info))
-        else:
-            self.error('It looks like we could not establish an healthy '
-                'TCP connection to any of the API endpoints.\n')
         if deploy_trace_id is not None:
             self.error('If this message happens too often, please e-mail\n' \
                     'support@dotcloud.com and mention this trace ID: {0}'
