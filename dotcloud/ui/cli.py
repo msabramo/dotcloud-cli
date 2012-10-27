@@ -122,6 +122,12 @@ class CLI(object):
                 pass
             except urllib2.URLError as e:
                 self.error('Accessing dotCloud API failed: {0}'.format(str(e)))
+        except requests.ConnectionError, e:
+            self.error('The server seems to be unresponsive. Please check that you are '
+                'connected to the Internet or try again later.\n'
+                'If the problem persists, issue a support ticket to support@dotcloud.com')
+            self.error('Details: {exc}'.format(exc=e))
+            return 1
         except Exception, e:
             message = 'An unexpected error has occured: {exc}.\n'.format(exc=e)
             if global_endpoint_info:
