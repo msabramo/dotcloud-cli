@@ -20,11 +20,26 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 ## THE SOFTWARE.
 
-from setuptools import setup
-VERSION = '0.9.1'
+import os
+import sys
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
+VERSION = '0.9.2'
+
+if sys.argv[-1] == 'publish':
+    os.system('rm -rf *.egg-info')
+    os.system('rm -rf build')
+    os.system('rm -rf dist')
+    os.system('git clean -x -f')
+    os.system('python setup.py sdist upload')
+    sys.exit()
 
 setup(
-    name = 'dotcloud-beta',
+    name = 'dotcloud',
     author = 'dotCloud Inc.',
     version = VERSION,
     packages = [
@@ -34,7 +49,7 @@ setup(
         'dotcloud.packages'
     ],
     scripts  = [
-        'bin/dotcloud-beta'
+        'bin/dotcloud'
     ],
     install_requires = ['argparse', 'requests==0.14.1', 'colorama'],
     zip_safe = False
