@@ -34,8 +34,15 @@ locale.setlocale(locale.LC_ALL, '')
 class CLI(object):
     __version__ = VERSION
     def __init__(self, debug=False, colors=None, endpoint=None, username=None):
-        sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
-        sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
+        # If you re-open stdout/stderr like this twice, then the second time
+        # something weird happen and you cannot print unicode again (it will
+        # raise this: UnicodeDecodeError: 'ascii' codec can't decode byte
+        # 0xe2...).
+        utf_8_stream_writer = codecs.getwriter('utf-8')
+        if not isinstance(sys.stdout, utf_8_stream_writer):
+            sys.stdout = utf_8_stream_writer(sys.stdout)
+            sys.stderr = utf_8_stream_writer(sys.stderr)
+
         self._version_checked = False
         self.client = RESTClient(endpoint=endpoint, debug=debug,
                 user_agent=self._build_useragent_string(),
