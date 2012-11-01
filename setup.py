@@ -41,6 +41,8 @@ if sys.argv[-1] == 'publish':
 setup(
     name = 'dotcloud',
     author = 'dotCloud Inc.',
+    author_email = 'support@dotcloud.com',
+    url = 'http://www.dotcloud.com/',
     version = VERSION,
     packages = [
         'dotcloud',
@@ -52,5 +54,14 @@ setup(
         'bin/dotcloud'
     ],
     install_requires = ['argparse', 'requests==0.14.1', 'colorama'],
-    zip_safe = False
+    zip_safe = False,
+    description = 'dotCloud command-line interface client',
+    long_description =
+    'Using dotCloud, you can assemble your stack from pre-configured and '
+    'heavily tested components. dotCloud supports major application '
+    'servers, databases and message buses. '
+    '\n'
+    'The dotCloud CLI allows you to manage your software deployments on '
+    'the dotCloud platform. To use this tool, you will need a dotCloud '
+    'account. Register at http://www.dotcloud.com/ to get one!'
 )
