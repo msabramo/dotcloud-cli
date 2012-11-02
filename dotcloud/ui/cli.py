@@ -753,6 +753,19 @@ class CLI(object):
 
     @app_local
     def cmd_push(self, args):
+        if self.local_config == {} and not os.path.exists('dotcloud.yml'):
+            self.die('No \'dotcloud.yml\' found in \'{0}\' \n{1}'.format(
+                os.getcwd(),
+                'Are you sure you are in the correct directory ?')
+            )
+        elif not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
+            self.die('No \'dotcloud.yml\' found in \'{0}\', \n{1}. \n{2}'.format(
+                self.local_config_root,
+                'the closest parent folder connected to an application',
+                'Did you forget to create a \'dotcloud.yml\'?'
+                )
+            )
+
         protocol = self._selected_push_protocol(args, use_local_config=True)[1]
         branch = self.local_config.get('push_branch') \
                 if protocol != 'rsync' else None
