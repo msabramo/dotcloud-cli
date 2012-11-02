@@ -753,7 +753,8 @@ class CLI(object):
 
     @app_local
     def cmd_push(self, args):
-        if self.local_config == {} and not os.path.exists('dotcloud.yml'):
+        root = getattr(self, 'local_config_root', None)
+        if root == None and not os.path.exists('dotcloud.yml'):
             self.die('No \'dotcloud.yml\' found in \'{0}\' \n{1}'.format(
                 os.getcwd(),
                 'Are you sure you are in the correct directory ?')
