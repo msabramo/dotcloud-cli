@@ -183,26 +183,6 @@ class CLI(object):
             return func(self, args)
         return wrapped
 
-    def check_hibernation(self, args):
-        url = '/applications/{0}'.format(args.application)
-        app = self.user.get(url).item
-        domain = app['services'][0]['domains'][0]['domain']
-        hibernating = len(app['services']) and app['services'][0]['instances'][0]['hibernating']
-        return (hibernating, domain)
-
-    def app_hibernation(func):
-        def wrapped(self, args):
-            (hibernating, domain) = self.check_hibernation(args)
-            if not hibernating :
-                return func(self, args)
-            else :
-                self.die('Your application is sleeping deeply, or hibernating.\n' +
-                    'To wake it up, visit one of its HTTP endpoints, such as: \n' +
-                    'http://' + domain
-                )
-        return wrapped
-
-
     def save_config(self, config):
         dir = '.dotcloud'
         if not os.path.exists(dir):
@@ -733,7 +713,6 @@ class CLI(object):
             return ['http://{0}'.format(d.get('domain')) for d in domains]
 
     @app_local
-    @app_hibernation
     def cmd_deploy(self, args):
         self.deploy(args.application, clean=args.clean, revision=args.revision)
 
@@ -773,7 +752,6 @@ class CLI(object):
         return ('--' + arg, args_proto_map[arg])
 
     @app_local
-    @app_hibernation
     def cmd_push(self, args):
         root = getattr(self, 'local_config_root', None)
         if root is None and not os.path.exists('dotcloud.yml'):
@@ -957,7 +935,6 @@ class CLI(object):
         return 0
 
     @property
-    @app_hibernation
     def common_ssh_options(self):
         return [
             'ssh',
@@ -1042,7 +1019,6 @@ class CLI(object):
         return subprocess.Popen(ssh_args)
 
     @app_local
-    @app_hibernation
     def cmd_run(self, args):
         ssh_endpoint = self.get_ssh_endpoint(args)
         if args.command:
@@ -1065,7 +1041,6 @@ class CLI(object):
         return ret
 
     @app_local
-    @app_hibernation
     def cmd_restart(self, args):
         # FIXME: Handle --all?
         service_name, instance_id = self.parse_service_instance(args.instance)
@@ -1237,7 +1212,6 @@ class CLI(object):
         return '{0} dlogs {1}'.format(self.cmd, deploy_id)
 
     @app_local
-    @app_hibernation
     def cmd_dlogs(self, args):
         filter_svc = None
         filter_inst = None
@@ -1254,7 +1228,6 @@ class CLI(object):
                 follow=follow, lines=args.lines)
 
     @app_local
-    @app_hibernation
     def cmd_logs(self, args):
         url = '/applications/{0}/logs?stream'.format(
                 args.application)
