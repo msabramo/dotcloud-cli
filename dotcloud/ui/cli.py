@@ -150,7 +150,6 @@ class CLI(object):
             self.error(message)
             return 1
 
-
     def _parse_version(self, s):
         if not s:
             return None
@@ -193,7 +192,7 @@ class CLI(object):
 
         if not self._is_version_gte(version_local, version_cur):
             self.info('A newer version ({0}) of the CLI is available ' \
-                    '(upgrade with: pip install -U https://github.com/dotcloud/dotcloud-cli/tarball/master)'.format(version_cur_s))
+                '(upgrade with: pip install -U dotcloud).'.format(version_cur_s))
 
     def ensure_app_local(self, args):
         if args.application is None:
@@ -786,17 +785,18 @@ class CLI(object):
     def cmd_push(self, args):
         root = getattr(self, 'local_config_root', None)
         if root is None and not os.path.exists('dotcloud.yml'):
-            self.die('No \'dotcloud.yml\' found in \'{0}\' \n{1}'.format(
-                os.getcwd(),
-                'Are you sure you are in the correct directory ?')
-            )
+            self.die(
+                "No 'dotcloud.yml' found in '{0}'\n"
+                "Are you sure you are in the correct directory ?".format(
+                    os.getcwd(),
+            ))
         elif not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
-            self.die('No \'dotcloud.yml\' found in \'{0}\', \n{1}. \n{2}'.format(
-                self.local_config_root,
-                'the closest parent folder connected to an application',
-                'Did you forget to create a \'dotcloud.yml\'?'
-                )
-            )
+            self.die(
+                "No 'dotcloud.yml' found in '{0}',\n"
+                "the closest parent folder connected to an application.\n"
+                "Did you forget to create a 'dotcloud.yml'?".format(
+                    self.local_config_root,
+            ))
 
         protocol = self._selected_push_protocol(args, use_local_config=True)[1]
         branch = self.local_config.get('push_branch') \
