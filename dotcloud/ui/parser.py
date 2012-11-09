@@ -276,7 +276,7 @@ def get_parser(name='dotcloud'):
 
     # dotcloud revisions
     revisions = subcmd.add_parser('revisions',
-            help='Display all the knowns revision of the application',
+            help='Display all the known revision of the application',
             parents=[common_parser])
 
     return parser

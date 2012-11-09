@@ -20,12 +20,29 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 ## THE SOFTWARE.
 
-from setuptools import setup
-VERSION = '0.9.1'
+import os
+import sys
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
+VERSION = '0.9.2'
+
+if sys.argv[-1] == 'publish':
+    os.system('rm -rf *.egg-info')
+    os.system('rm -rf build')
+    os.system('rm -rf dist')
+    os.system('git clean -x -f')
+    os.system('python setup.py sdist upload')
+    sys.exit()
 
 setup(
-    name = 'dotcloud-beta',
+    name = 'dotcloud',
     author = 'dotCloud Inc.',
+    author_email = 'support@dotcloud.com',
+    url = 'http://www.dotcloud.com/',
     version = VERSION,
     packages = [
         'dotcloud',
@@ -34,8 +51,17 @@ setup(
         'dotcloud.packages'
     ],
     scripts  = [
-        'bin/dotcloud-beta'
+        'bin/dotcloud'
     ],
-    install_requires = ['argparse', 'requests==0.13.8', 'colorama'],
-    zip_safe = False
+    install_requires = ['argparse', 'requests==0.14.1', 'colorama'],
+    zip_safe = False,
+    description = 'dotCloud command-line interface client',
+    long_description =
+    'Using dotCloud, you can assemble your stack from pre-configured and '
+    'heavily tested components. dotCloud supports major application '
+    'servers, databases and message buses. '
+    '\n'
+    'The dotCloud CLI allows you to manage your software deployments on '
+    'the dotCloud platform. To use this tool, you will need a dotCloud '
+    'account. Register at http://www.dotcloud.com/ to get one!'
 )

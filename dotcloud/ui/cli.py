@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from .debug import global_endpoint_info
 from .parser import get_parser
 from .version import VERSION
 from .config import GlobalConfig, CLIENT_KEY, CLIENT_SECRET
@@ -53,6 +54,7 @@ class CLI(object):
             401: self.error_authen,
             403: self.error_authz,
             404: self.error_not_found,
+            418: self.error_maintenance,
             422: self.error_unprocessable,
             500: self.error_server,
         }
@@ -107,25 +109,47 @@ class CLI(object):
         return True
 
     def run(self, args):
-        p = get_parser(self.cmd)
-        args = p.parse_args(args)
-        if not self.global_config.loaded and args.cmd != 'setup':
-            self.die('Not configured yet. Please run "{0} setup"'.format(self.cmd))
-        self.load_local_config(args)
-        cmd = 'cmd_{0}'.format(args.cmd)
-        if not hasattr(self, cmd):
-            raise NotImplementedError('cmd not implemented: "{0}"'.format(cmd))
         try:
-            return getattr(self, cmd)(args)
-        except AuthenticationNotConfigured:
-            self.error('Authentication is not configured. Please run `{0} setup`'.format(self.cmd))
-        except RESTAPIError, e:
-            handler = self.error_handlers.get(e.code, self.default_error_handler)
-            handler(e)
-        except KeyboardInterrupt:
-            pass
-        except urllib2.URLError as e:
-            self.error('Accessing dotCloud API failed: {0}'.format(str(e)))
+            p = get_parser(self.cmd)
+            args = p.parse_args(args)
+            if not self.global_config.loaded and args.cmd != 'setup':
+                self.die('Not configured yet. Please run "{0} setup"'.format(self.cmd))
+            self.load_local_config(args)
+            cmd = 'cmd_{0}'.format(args.cmd)
+            if not hasattr(self, cmd):
+                raise NotImplementedError('cmd not implemented: "{0}"'.format(cmd))
+            try:
+                return getattr(self, cmd)(args)
+            except AuthenticationNotConfigured:
+                self.error('Authentication is not configured. Please run `{0} setup`'.format(self.cmd))
+            except RESTAPIError, e:
+                handler = self.error_handlers.get(e.code, self.default_error_handler)
+                handler(e)
+            except KeyboardInterrupt:
+                pass
+            except urllib2.URLError as e:
+                self.error('Accessing dotCloud API failed: {0}'.format(str(e)))
+        except requests.ConnectionError, e:
+            self.error('The server seems to be unresponsive. Please check that you are '
+                'connected to the Internet or try again later.\n'
+                'If the problem persists, issue a support ticket to support@dotcloud.com')
+            self.error('Details: {exc}'.format(exc=e))
+            return 1
+        except Exception, e:
+            message = 'An unexpected error has occured: {exc}.\n'.format(exc=e)
+            if global_endpoint_info:
+                message += ('The remote server handling the last request was '
+                            '{remotehost}:{remoteport}.\n'
+                            'The {timesource} timestamp was {timestamp}.\n'
+                            .format(**global_endpoint_info))
+            else:
+                message += ('It looks like we could not establish an healthy '
+                            'TCP connection to any of the API endpoints.\n')
+            message += ('Please try again; and if the problem persists, '
+                        'contact support@dotcloud.com with this information.')
+            self.error(message)
+            return 1
+
 
     def _parse_version(self, s):
         if not s:
@@ -291,6 +315,9 @@ class CLI(object):
                 if e.trace_id else ''))
         self.die()
 
+    def error_maintenance(self, e):
+        self.die('{0}'.format(e.desc))
+
     def cmd_check(self, args):
         # TODO Check ~/.dotcloud stuff
         try:
@@ -346,6 +373,10 @@ class CLI(object):
 
     def cmd_list(self, args):
         res = self.user.get('/applications')
+        if not res.items:
+            self.info('You don\'t have any application yet, create one with `{0} create`'.format(self.cmd))
+            return
+
         padding = max([len(app['name']) for app in res.items]) + 2
         for app in sorted(res.items, key=lambda x: x['name']):
             if app['name'] == args.application:
@@ -474,8 +505,8 @@ class CLI(object):
         if args.subcmd == 'list':
             self.info('Environment variables for application {0}'.format(args.application))
             var = self.user.get(url).item
-            for k, v in sorted(var.items()):
-                print '{0}={1}'.format(k, v)
+            for name in sorted(var.keys()):
+                print '='.join((name, str(var.get(name))))
         elif args.subcmd == 'set':
             self.info('Setting {0} (application {1})'.format(
                 ', '.join(args.variables), args.application))
@@ -641,7 +672,7 @@ class CLI(object):
             return
 
         services_table = [
-            ['name', 'type', 'instances', 'reserved memory']
+            ['name', 'type', 'containers', 'reserved memory']
         ]
 
         for service in sorted(services, key=lambda s: s.get('name')):
@@ -949,7 +980,7 @@ class CLI(object):
             s = s.replace(c, '\\' + c)
         return s
 
-    def parse_service_instance(self, service_or_instance):
+    def parse_service_instance(self, service_or_instance, command):
         if '.' not in service_or_instance:
             self.die('You must specify a service and instance, e.g. "www.0"')
         service_name, instance_id = service_or_instance.split('.', 1)
@@ -960,12 +991,15 @@ class CLI(object):
             if instance_id < 0:
                 raise ValueError('value should be >= 0')
         except ValueError as e:
-            self.die('Unable to parse instance number: {0}'.format(e))
+            self.error('Invalid service instance identifier: {0}'.format(service_or_instance))
+            self.info('Did you mean `{0} {1} -A {2} {3}` ?'.format(self.cmd, command, service_name, instance_id))
+            self.die()
+
         return service_name, instance_id
 
     def get_ssh_endpoint(self, args):
         if '.' in args.service_or_instance:
-            service_name, instance_id = self.parse_service_instance(args.service_or_instance)
+            service_name, instance_id = self.parse_service_instance(args.service_or_instance, args.cmd)
         else:
             service_name, instance_id = (args.service_or_instance, None)
 
@@ -1043,7 +1077,7 @@ class CLI(object):
     @app_local
     def cmd_restart(self, args):
         # FIXME: Handle --all?
-        service_name, instance_id = self.parse_service_instance(args.instance)
+        service_name, instance_id = self.parse_service_instance(args.instance, args.cmd)
 
         url = '/applications/{0}/services/{1}/instances/{2}/status' \
             .format(args.application, service_name, instance_id)
