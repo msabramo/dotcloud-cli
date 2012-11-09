@@ -1022,7 +1022,7 @@ class CLI(object):
     def cmd_run(self, args):
         ssh_endpoint = self.get_ssh_endpoint(args)
         if args.command:
-            cmd_args = [args.command] + args.args
+            cmd_args = [". ~/.profile ; ", args.command] + args.args
             self.info('Executing "{0}" on service ({1}) instance #{2} (application {3})'.format(
                 ' '.join(cmd_args), ssh_endpoint['service'],
                 ssh_endpoint['instance'], args.application))
