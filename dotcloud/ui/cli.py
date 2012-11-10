@@ -1056,16 +1056,16 @@ class CLI(object):
     def cmd_run(self, args):
         ssh_endpoint = self.get_ssh_endpoint(args)
         if args.command:
-            cmd_args = [". ~/.profile ; ", args.command] + args.args
+            cmd = ['bash -l -c "{0} {1}"'.format(args.command , ' '.join(args.args))]
             self.info('Executing "{0}" on service ({1}) instance #{2} (application {3})'.format(
-                ' '.join(cmd_args), ssh_endpoint['service'],
+                ' '.join([args.command] + args.args), ssh_endpoint['service'],
                 ssh_endpoint['instance'], args.application))
         else:
-            cmd_args = None
+            cmd = None
             self.info('Opening a shell on service ({0}) instance #{1} (application {2})'.format(
                     ssh_endpoint['service'], ssh_endpoint['instance'],
                     args.application))
-        return self.spawn_ssh(ssh_endpoint, cmd_args).wait()
+        return self.spawn_ssh(ssh_endpoint, cmd).wait()
 
     def parse_url(self, url):
         m = re.match('^(?P<scheme>[^:]+)://((?P<user>[^@]+)@)?(?P<host>[^:/]+)(:(?P<port>\d+))?(?P<path>/.*)?$', url)
