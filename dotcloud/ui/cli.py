@@ -1096,7 +1096,10 @@ class CLI(object):
             service_name, instance_id, args.application))
 
     def iso_dtime_local(self, strdate):
-        bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%S.%fZ")
+        try:
+            bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%S.%fZ")
+        except ValueError:
+            bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%SZ")
         ts = calendar.timegm(bt)
         dt = datetime.datetime.fromtimestamp(ts)
         return dt
