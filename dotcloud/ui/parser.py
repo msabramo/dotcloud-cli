@@ -279,4 +279,12 @@ def get_parser(name='dotcloud'):
             help='Display all the known revision of the application',
             parents=[common_parser])
 
+    # dotcloud upgrade
+    upgrade = subcmd.add_parser('upgrade',
+            help='Upgrade a service to a new image revision',
+            parents=[common_parser])
+    upgrade.add_argument('--dry-run', '-n', action='store_true',
+            help='Only check if you can upgrade services to a newer service revision')
+    upgrade.add_argument('service', help='Service to upgrade', nargs='?')
+
     return parser

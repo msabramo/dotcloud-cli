@@ -930,7 +930,7 @@ class CLI(object):
         except OSError:
             self.die('Unable to spawn rsync')
 
-    def deploy(self, application, clean=False, revision=None):
+    def deploy(self, application, clean=False, revision=None, service=None):
         if revision is not None:
             self.info('Submitting a deployment request for revision {0} of application {1}'.format(
                 revision, application))
@@ -938,7 +938,8 @@ class CLI(object):
             self.info('Submitting a deployment request for application {0}'.format(
                 application))
         url = '/applications/{0}/deployments'.format(application)
-        response = self.user.post(url, {'revision': revision, 'clean': clean})
+        response = self.user.post(url,
+            {'revision': revision, 'clean': clean, 'service': service})
         deploy_trace_id = response.trace_id
         deploy_id = response.item['deploy_id']
         self.info('Deployment of revision {c.bright}{0}{c.reset}' \
@@ -1310,3 +1311,81 @@ class CLI(object):
                 print '*', self.colors.green(version)
             else:
                 print ' ', version
+
+    @app_local
+    def cmd_upgrade(self, args):
+        app_url = '/applications/{0}'.format(args.application)
+        if not args.service:
+            application = self.user.get(app_url).item
+            # Unfortunately we don't get the details (such as the
+            # image_revision) we need on the service in the application object.
+            # So we will have to query the REST API for each service later.
+            services = [svc['name'] for svc in application.get('services', [])]
+        else:
+            services = [args.service]
+
+        upgradeable = set() # List of services that have an upgrade available
+        upgrade = set() # List of services we can upgrade with a clean deploy
+        for service_name in services:
+            service_url = '{0}/services/{1}'.format(app_url, service_name)
+            service = self.user.get(service_url).item
+
+            service_type = service.get('service_type')
+            service_instances = service.get('instances')
+            if not service_type or not service_instances:
+                continue
+
+            service_revision = service_instances[0].get('image_version')
+            image_upgrade = service_instances[0].get('image_upgrade')
+            if not service_revision or not image_upgrade:
+                continue
+
+            # Fetch informations about the current and the latest revisions
+            # of the service image (note: we could put that into a cache,
+            # in case the app has several service of the same type at the
+            # same revision):
+            image_infos = self.client.get(
+                '/images/{0}'.format(service_type)
+            ).item
+            upgrade_revision_infos = image_infos['latest_revision']
+            service_revision_infos = self.client.get(
+                '/images/{0}/revisions/{1}'.format(
+                    service_type, service_revision
+                )
+            ).item
+
+            upgradeable.add(service_name)
+            if image_infos['upgradeable']:
+                upgrade.add(service_name)
+
+            self.info(
+                "{service} can be {how} upgraded from {type}/{from_rev} "
+                "({from_date}) to {type}/{to_rev} ({to_date})".format(
+                    service=service_name,
+                    how='automatically' if image_infos['upgradeable'] else 'manually',
+                    type=service_type,
+                    from_rev=service_revision,
+                    from_date=self.iso_dtime_local(service_revision_infos['date']).date(),
+                    to_rev=upgrade_revision_infos['revision'],
+                    to_date=self.iso_dtime_local(upgrade_revision_infos['date']).date()
+                )
+            )
+
+        if not upgradeable:
+            self.success("All the services are up to date in {0}".format(args.application))
+            return
+
+        if upgrade and not args.dry_run and self.confirm("Upgrade {0}?".format(", ".join(upgrade))):
+            manual_upgrades = upgradeable - upgrade
+            if len(upgrade) == 1:
+                single_service = upgrade.pop()
+                self.info("Upgrading {0}".format(single_service))
+                self.deploy(args.application, clean=True, service=single_service)
+            else:
+                self.info(
+                    "Upgrading all the automatically upgradeable services "
+                    "in {0}".format(args.application)
+                )
+                self.deploy(args.application, clean=True)
+            if manual_upgrades:
+                self.info("{0} must be upgraded manually.".format(", ".join(manual_upgrades)))
