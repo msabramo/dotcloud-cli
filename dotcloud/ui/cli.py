@@ -637,7 +637,7 @@ class CLI(object):
                 ('datacenter', instance.get('datacenter')),
                 ('host', instance.get('host')),
                 ('container', instance.get('container_name')),
-                ('service revision', service_revision),
+                ('service revision', '{0}/{1}'.format(service.get('service_type'), service_revision)),
                 ('revision', instance.get('revision')),
                 ('ports', [(port.get('name'), port.get('url'))
                     for port in instance.get('ports')
