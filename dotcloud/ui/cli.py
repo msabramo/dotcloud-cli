@@ -134,6 +134,8 @@ class CLI(object):
                 'connected to the Internet or try again later.\n'
                 'If the problem persists, issue a support ticket to support@dotcloud.com')
             self.error('Details: {exc}'.format(exc=e))
+            if self.debug:
+                raise
             return 1
         except Exception, e:
             message = 'An unexpected error has occured: {exc}.\n'.format(exc=e)
@@ -148,6 +150,8 @@ class CLI(object):
             message += ('Please try again; and if the problem persists, '
                         'contact support@dotcloud.com with this information.')
             self.error(message)
+            if self.debug:
+                raise
             return 1
 
     def _parse_version(self, s):
