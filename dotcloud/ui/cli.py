@@ -271,7 +271,7 @@ class CLI(object):
         input = raw_input(prompt + choice + ': ').lower()
         if input == '':
             input = default
-        return input == 'y'
+        return re.match(r'^y(?:es)?$', input.strip(), re.IGNORECASE)
 
     def error(self, message):
         print '{c.red}{c.bright}Error:{c.reset} {message}' \
