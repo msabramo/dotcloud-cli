@@ -88,7 +88,9 @@ def get_parser(name='dotcloud'):
     subcmd = parser.add_subparsers(dest='cmd')
 
     # dotcloud setup
-    subcmd.add_parser('setup', help='Setup the client authentication')
+    setup = subcmd.add_parser('setup', help='Setup the client authentication')
+    setup.add_argument('--api-key', action='store_true',
+            help='Authenticate using an API Key rather than username/password combination.')
 
     # dotcloud check
     subcmd.add_parser('check', help='Check the installation and authentication')

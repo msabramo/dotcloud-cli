@@ -334,21 +334,32 @@ class CLI(object):
         self.get_keys()
 
     def cmd_setup(self, args):
-        client = RESTClient(endpoint=self.client.endpoint)
-        client.authenticator = NullAuth()
-        urlmap = client.get('/auth/discovery').item
-        username = self.prompt('dotCloud username or email')
-        password = self.prompt('Password', noecho=True)
-        credential = {'token_url': urlmap.get('token'),
-            'key': CLIENT_KEY, 'secret': CLIENT_SECRET}
-        try:
-            token = self.authorize_client(urlmap.get('token'), credential, username, password)
-        except Exception as e:
-            self.die('Username and password do not match. Try again.')
-        token['url'] = credential['token_url']
-        config = GlobalConfig()
-        config.data = {'token': token}
-        config.save()
+        if args.api_key:
+            # API Key
+            self.info('You can find your API key at https://account.dotcloud.com/settings/')
+            api_key = self.prompt('Please enter your API key')
+            if not re.match('\w{20}:\w{40}', api_key):
+                self.die('Invalid API Key')
+            config = GlobalConfig()
+            config.data = {'apikey': api_key}
+            config.save()
+        else:
+            # OAuth2
+            client = RESTClient(endpoint=self.client.endpoint)
+            client.authenticator = NullAuth()
+            urlmap = client.get('/auth/discovery').item
+            username = self.prompt('dotCloud username or email')
+            password = self.prompt('Password', noecho=True)
+            credential = {'token_url': urlmap.get('token'),
+                'key': CLIENT_KEY, 'secret': CLIENT_SECRET}
+            try:
+                token = self.authorize_client(urlmap.get('token'), credential, username, password)
+            except Exception as e:
+                self.die('Username and password do not match. Try again.')
+            token['url'] = credential['token_url']
+            config = GlobalConfig()
+            config.data = {'token': token}
+            config.save()
         self.global_config = GlobalConfig()  # reload
         self.setup_auth()
         self.get_keys()
