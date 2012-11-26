@@ -799,19 +799,26 @@ class CLI(object):
     @app_local
     def cmd_push(self, args):
         root = getattr(self, 'local_config_root', None)
-        if root is None and not os.path.exists('dotcloud.yml'):
+        if args.path is not None and not os.path.exists(os.path.join(args.path, 'dotcloud.yml')):
             self.die(
                 "No 'dotcloud.yml' found in '{0}'\n"
-                "Are you sure you are in the correct directory ?".format(
-                    os.getcwd(),
+                "Are you sure you entered the correct directory path?".format(
+                    args.path,
             ))
-        elif not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
-            self.die(
-                "No 'dotcloud.yml' found in '{0}',\n"
-                "the closest parent folder connected to an application.\n"
-                "Did you forget to create a 'dotcloud.yml'?".format(
-                    self.local_config_root,
-            ))
+        elif args.path is None:
+            if root is None and not os.path.exists('dotcloud.yml'):
+                self.die(
+                    "No 'dotcloud.yml' found in '{0}'\n"
+                    "Are you sure you are in the correct directory ?".format(
+                        os.getcwd(),
+                ))
+            elif not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
+                self.die(
+                    "No 'dotcloud.yml' found in '{0}',\n"
+                    "the closest parent folder connected to an application.\n"
+                    "Did you forget to create a 'dotcloud.yml'?".format(
+                        self.local_config_root,
+                ))
 
         protocol = self._selected_push_protocol(args, use_local_config=True)[1]
         branch = self.local_config.get('push_branch') \
