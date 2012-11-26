@@ -37,6 +37,7 @@ class CLI(object):
     def __init__(self, debug=False, colors=None, endpoint=None, username=None):
         sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
         sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
+        self.info_output = sys.stdout
         self._version_checked = False
         self.client = RESTClient(endpoint=endpoint, debug=debug,
                 user_agent=self._build_useragent_string(),
@@ -103,6 +104,7 @@ class CLI(object):
 
     def run(self, args):
         try:
+            self.info_output = sys.stderr
             p = get_parser(self.cmd)
             args = p.parse_args(args)
             if not self.global_config.loaded and args.cmd != 'setup':
@@ -142,6 +144,8 @@ class CLI(object):
                         'contact support@dotcloud.com with this information.')
             self.error(message)
             return 1
+        finally:
+            self.info_output = sys.stdout
 
 
     def _parse_version(self, s):
@@ -268,7 +272,7 @@ class CLI(object):
             .format(c=self.colors, message=message)
 
     def info(self, message):
-        print '{c.blue}{c.bright}==>{c.reset} {message}' \
+        print >> self.info_output, '{c.blue}{c.bright}==>{c.reset} {message}' \
             .format(c=self.colors, message=message)
 
     def warning(self, message):
