@@ -1,34 +1,33 @@
 # dotCloud CLI
 
-This is a beta version of the new dotCloud command line interface.
+This is the dotCloud command line interface.
 
 ## What's New
 
 This version of CLI is designed to work with the application directory
-linked to the remote dotCloud application.
+linked to thremote dotCloud application.
 
 This allows you to avoid typing the same application names multiple
 times, and reduce the possiblity of making typos and overwrite wrong
 applications by repeating the command line history.
 
     # New CLI 
-    > dotcloud-beta push
-    > dotcloud-beta info
-    > dotcloud-beta run www bash
+    > dotcloud push
+    > dotcloud info
+    > dotcloud run www bash
 
     # Old CLI
     > dotcloud push myapp .
     > dotcloud info myapp
     > dotcloud run myapp.www bash
 
-The command line executable is installed as `dotcloud-beta` so that you
-can keep using the existing version of the dotCloud command.
+The command line executable is installed as `dotcloud`.
 
 ## Setup
 
 First, you have to configure your CLI.
 
-    > dotcloud-beta setup
+    > dotcloud setup
     Dotcloud Username: your-user-name
     Password: **********
 
@@ -41,7 +40,7 @@ the OAuth2 access token in the local disk. Once the setup is complete,
 you can run the check command to see if everything is configured
 correctly.
 
-    > dotcloud-beta check
+    > dotcloud check
     --> Checking the authentication status
     OK: Client is authenticated as <your-username>
 
@@ -58,7 +57,7 @@ over from the setup.
 
 Once you've done writing your awesome application, run the `create` command:
 
-    > dotcloud-beta create myapp
+    > dotcloud create myapp
     --> Creating a new application called "myapp"
     Application "myapp" created.
     Connect the current directory to "myapp"? [Yn]: y
@@ -73,22 +72,22 @@ typing the application name from now on.
 
 To push the code to the dotCloud platform, simply type:
 
-    > dotcloud-beta push
+    > dotcloud push
 
 and it will upload the code from the current directory to the
 application. You can see the currently connected application by typing:
 
-    > dotcloud-beta app
+    > dotcloud app
     myapp
 
-You can see the list of commands by running `dotcloud-beta -h`.
+You can see the list of commands by running `dotcloud -h`.
 
 If you typed `n` when asked to connect the current directory, the CLI
 can't find the application name for the commands. You can specify the
 application name in such case, using the `--application` (or `-a` for
 short) option:
 
-    > dotcloud-beta -a myapp info
+    > dotcloud -a myapp info
 
 You can also use this option when you want to run commands against the
 application that you don't have the working directory for.
@@ -100,7 +99,7 @@ remote application and want to connect them together, instead of
 creating a new application, run the connect command:
 
     > cd ~/dev/myapp
-    > dotcloud-beta connect myapp
+    > dotcloud connect myapp
 
 It will link your current working directory with the (existing) dotCloud application `myapp`.
 
