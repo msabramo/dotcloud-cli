@@ -349,7 +349,7 @@ class CLI(object):
             client.authenticator = NullAuth()
             urlmap = client.get('/auth/discovery').item
             username = self.prompt('dotCloud username or email')
-            password = self.prompt('Password', noecho=True)
+            password = self.prompt('Password'.encode('ascii'), noecho=True)
             credential = {'token_url': urlmap.get('token'),
                 'key': CLIENT_KEY, 'secret': CLIENT_SECRET}
             try:
