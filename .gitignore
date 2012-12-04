@@ -4,6 +4,7 @@
 *.EGG
 *.EGG-INFO
 build
+dist
 .installed.cfg
 *.pyc
 *.pyo
