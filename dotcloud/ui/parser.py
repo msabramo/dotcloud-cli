@@ -88,7 +88,9 @@ def get_parser(name='dotcloud'):
     subcmd = parser.add_subparsers(dest='cmd')
 
     # dotcloud setup
-    subcmd.add_parser('setup', help='Setup the client authentication')
+    setup = subcmd.add_parser('setup', help='Setup the client authentication')
+    setup.add_argument('--api-key', action='store_true',
+            help='Authenticate using an API Key rather than username/password combination.')
 
     # dotcloud check
     subcmd.add_parser('check', help='Check the installation and authentication')
@@ -278,5 +280,13 @@ def get_parser(name='dotcloud'):
     revisions = subcmd.add_parser('revisions',
             help='Display all the known revision of the application',
             parents=[common_parser])
+
+    # dotcloud upgrade
+    upgrade = subcmd.add_parser('upgrade',
+            help='Upgrade a service to a new image revision',
+            parents=[common_parser])
+    upgrade.add_argument('--dry-run', '-n', action='store_true',
+            help='Only check if you can upgrade services to a newer service revision')
+    upgrade.add_argument('service', help='Service to upgrade', nargs='?')
 
     return parser

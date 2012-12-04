@@ -35,9 +35,16 @@ locale.setlocale(locale.LC_ALL, '')
 class CLI(object):
     __version__ = VERSION
     def __init__(self, debug=False, colors=None, endpoint=None, username=None):
-        sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
-        sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
+        # If you re-open stdout/stderr like this twice, then the second time
+        # something weird happen and you cannot print unicode again (it will
+        # raise this: UnicodeDecodeError: 'ascii' codec can't decode byte
+        # 0xe2...).
+        utf_8_stream_writer = codecs.getwriter('utf-8')
+        if not isinstance(sys.stdout, utf_8_stream_writer):
+            sys.stdout = utf_8_stream_writer(sys.stdout)
+            sys.stderr = utf_8_stream_writer(sys.stderr)
         self.info_output = sys.stdout
+
         self._version_checked = False
         self.client = RESTClient(endpoint=endpoint, debug=debug,
                 user_agent=self._build_useragent_string(),
@@ -129,6 +136,8 @@ class CLI(object):
                 'connected to the Internet or try again later.\n'
                 'If the problem persists, issue a support ticket to support@dotcloud.com')
             self.error('Details: {exc}'.format(exc=e))
+            if self.debug:
+                raise
             return 1
         except Exception, e:
             message = 'An unexpected error has occured: {exc}.\n'.format(exc=e)
@@ -143,10 +152,11 @@ class CLI(object):
             message += ('Please try again; and if the problem persists, '
                         'contact support@dotcloud.com with this information.')
             self.error(message)
+            if self.debug:
+                raise
             return 1
         finally:
             self.info_output = sys.stdout
-
 
     def _parse_version(self, s):
         if not s:
@@ -190,7 +200,7 @@ class CLI(object):
 
         if not self._is_version_gte(version_local, version_cur):
             self.info('A newer version ({0}) of the CLI is available ' \
-                    '(upgrade with: pip install -U https://github.com/dotcloud/dotcloud-cli/tarball/master)'.format(version_cur_s))
+                '(upgrade with: pip install -U dotcloud).'.format(version_cur_s))
 
     def ensure_app_local(self, args):
         if args.application is None:
@@ -265,7 +275,7 @@ class CLI(object):
         input = raw_input(prompt + choice + ': ').lower()
         if input == '':
             input = default
-        return input == 'y'
+        return re.match(r'^y(?:es)?$', input.strip(), re.IGNORECASE)
 
     def error(self, message):
         print '{c.red}{c.bright}Error:{c.reset} {message}' \
@@ -328,21 +338,32 @@ class CLI(object):
         self.get_keys()
 
     def cmd_setup(self, args):
-        client = RESTClient(endpoint=self.client.endpoint)
-        client.authenticator = NullAuth()
-        urlmap = client.get('/auth/discovery').item
-        username = self.prompt('dotCloud username or email')
-        password = self.prompt('Password', noecho=True)
-        credential = {'token_url': urlmap.get('token'),
-            'key': CLIENT_KEY, 'secret': CLIENT_SECRET}
-        try:
-            token = self.authorize_client(urlmap.get('token'), credential, username, password)
-        except Exception as e:
-            self.die('Username and password do not match. Try again.')
-        token['url'] = credential['token_url']
-        config = GlobalConfig()
-        config.data = {'token': token}
-        config.save()
+        if args.api_key:
+            # API Key
+            self.info('You can find your API key at https://account.dotcloud.com/settings/')
+            api_key = self.prompt('Please enter your API key')
+            if not re.match('\w{20}:\w{40}', api_key):
+                self.die('Invalid API Key')
+            config = GlobalConfig()
+            config.data = {'apikey': api_key}
+            config.save()
+        else:
+            # OAuth2
+            client = RESTClient(endpoint=self.client.endpoint)
+            client.authenticator = NullAuth()
+            urlmap = client.get('/auth/discovery').item
+            username = self.prompt('dotCloud username or email')
+            password = self.prompt('Password'.encode('ascii'), noecho=True)
+            credential = {'token_url': urlmap.get('token'),
+                'key': CLIENT_KEY, 'secret': CLIENT_SECRET}
+            try:
+                token = self.authorize_client(urlmap.get('token'), credential, username, password)
+            except Exception as e:
+                self.die('Username and password do not match. Try again.')
+            token['url'] = credential['token_url']
+            config = GlobalConfig()
+            config.data = {'token': token}
+            config.save()
         self.global_config = GlobalConfig()  # reload
         self.setup_auth()
         self.get_keys()
@@ -621,12 +642,17 @@ class CLI(object):
             print '  - http://{0}'.format(domain.get('domain'))
 
         for instance in sorted(service.get('instances', []), key=lambda i: i.get('instance_id')):
+            service_revision = instance.get('image_version')
+            image_upgrade = instance.get('image_upgrade')
+            if service_revision and image_upgrade is not None:
+                service_revision += ' ({0})'.format('upgrade available' if image_upgrade else 'latest revision')
             print
             print '=== {0}.{1}'.format(service.get('name'), instance.get('instance_id'))
             pprint_kv([
                 ('datacenter', instance.get('datacenter')),
                 ('host', instance.get('host')),
                 ('container', instance.get('container_name')),
+                ('service revision', '{0}/{1}'.format(service.get('service_type'), service_revision)),
                 ('revision', instance.get('revision')),
                 ('ports', [(port.get('name'), port.get('url'))
                     for port in instance.get('ports')
@@ -776,6 +802,28 @@ class CLI(object):
 
     @app_local
     def cmd_push(self, args):
+        root = getattr(self, 'local_config_root', None)
+        if args.path is not None and not os.path.exists(os.path.join(args.path, 'dotcloud.yml')):
+            self.die(
+                "No 'dotcloud.yml' found in '{0}'\n"
+                "Are you sure you entered the correct directory path?".format(
+                    args.path,
+            ))
+        elif args.path is None:
+            if root is None and not os.path.exists('dotcloud.yml'):
+                self.die(
+                    "No 'dotcloud.yml' found in '{0}'\n"
+                    "Are you sure you are in the correct directory ?".format(
+                        os.getcwd(),
+                ))
+            elif not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
+                self.die(
+                    "No 'dotcloud.yml' found in '{0}',\n"
+                    "the closest parent folder connected to an application.\n"
+                    "Did you forget to create a 'dotcloud.yml'?".format(
+                        self.local_config_root,
+                ))
+
         protocol = self._selected_push_protocol(args, use_local_config=True)[1]
         branch = self.local_config.get('push_branch') \
                 if protocol != 'rsync' else None
@@ -904,7 +952,7 @@ class CLI(object):
         except OSError:
             self.die('Unable to spawn rsync')
 
-    def deploy(self, application, clean=False, revision=None):
+    def deploy(self, application, clean=False, revision=None, service=None):
         if revision is not None:
             self.info('Submitting a deployment request for revision {0} of application {1}'.format(
                 revision, application))
@@ -912,7 +960,8 @@ class CLI(object):
             self.info('Submitting a deployment request for application {0}'.format(
                 application))
         url = '/applications/{0}/deployments'.format(application)
-        response = self.user.post(url, {'revision': revision, 'clean': clean})
+        response = self.user.post(url,
+            {'revision': revision, 'clean': clean, 'service': service})
         deploy_trace_id = response.trace_id
         deploy_id = response.item['deploy_id']
         self.info('Deployment of revision {c.bright}{0}{c.reset}' \
@@ -1034,16 +1083,16 @@ class CLI(object):
     def cmd_run(self, args):
         ssh_endpoint = self.get_ssh_endpoint(args)
         if args.command:
-            cmd_args = [args.command] + args.args
+            cmd = ['bash -l -c "{0} {1}"'.format(args.command , ' '.join(args.args))]
             self.info('Executing "{0}" on service ({1}) instance #{2} (application {3})'.format(
-                ' '.join(cmd_args), ssh_endpoint['service'],
+                ' '.join([args.command] + args.args), ssh_endpoint['service'],
                 ssh_endpoint['instance'], args.application))
         else:
-            cmd_args = None
+            cmd = None
             self.info('Opening a shell on service ({0}) instance #{1} (application {2})'.format(
                     ssh_endpoint['service'], ssh_endpoint['instance'],
                     args.application))
-        return self.spawn_ssh(ssh_endpoint, cmd_args).wait()
+        return self.spawn_ssh(ssh_endpoint, cmd).wait()
 
     def parse_url(self, url):
         m = re.match('^(?P<scheme>[^:]+)://((?P<user>[^@]+)@)?(?P<host>[^:/]+)(:(?P<port>\d+))?(?P<path>/.*)?$', url)
@@ -1070,7 +1119,10 @@ class CLI(object):
             service_name, instance_id, args.application))
 
     def iso_dtime_local(self, strdate):
-        bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%S.%fZ")
+        try:
+            bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%S.%fZ")
+        except ValueError:
+            bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%SZ")
         ts = calendar.timegm(bt)
         dt = datetime.datetime.fromtimestamp(ts)
         return dt
@@ -1281,3 +1333,81 @@ class CLI(object):
                 print '*', self.colors.green(version)
             else:
                 print ' ', version
+
+    @app_local
+    def cmd_upgrade(self, args):
+        app_url = '/applications/{0}'.format(args.application)
+        if not args.service:
+            application = self.user.get(app_url).item
+            # Unfortunately we don't get the details (such as the
+            # image_revision) we need on the service in the application object.
+            # So we will have to query the REST API for each service later.
+            services = [svc['name'] for svc in application.get('services', [])]
+        else:
+            services = [args.service]
+
+        upgradeable = set() # List of services that have an upgrade available
+        upgrade = set() # List of services we can upgrade with a clean deploy
+        for service_name in services:
+            service_url = '{0}/services/{1}'.format(app_url, service_name)
+            service = self.user.get(service_url).item
+
+            service_type = service.get('service_type')
+            service_instances = service.get('instances')
+            if not service_type or not service_instances:
+                continue
+
+            service_revision = service_instances[0].get('image_version')
+            image_upgrade = service_instances[0].get('image_upgrade')
+            if not service_revision or not image_upgrade:
+                continue
+
+            # Fetch informations about the current and the latest revisions
+            # of the service image (note: we could put that into a cache,
+            # in case the app has several service of the same type at the
+            # same revision):
+            image_infos = self.client.get(
+                '/images/{0}'.format(service_type)
+            ).item
+            upgrade_revision_infos = image_infos['latest_revision']
+            service_revision_infos = self.client.get(
+                '/images/{0}/revisions/{1}'.format(
+                    service_type, service_revision
+                )
+            ).item
+
+            upgradeable.add(service_name)
+            if image_infos['upgradeable']:
+                upgrade.add(service_name)
+
+            self.info(
+                "{service} can be {how} upgraded from {type}/{from_rev} "
+                "({from_date}) to {type}/{to_rev} ({to_date})".format(
+                    service=service_name,
+                    how='automatically' if image_infos['upgradeable'] else 'manually',
+                    type=service_type,
+                    from_rev=service_revision,
+                    from_date=self.iso_dtime_local(service_revision_infos['date']).date(),
+                    to_rev=upgrade_revision_infos['revision'],
+                    to_date=self.iso_dtime_local(upgrade_revision_infos['date']).date()
+                )
+            )
+
+        if not upgradeable:
+            self.success("All the services are up to date in {0}".format(args.application))
+            return
+
+        if upgrade and not args.dry_run and self.confirm("Upgrade {0}?".format(", ".join(upgrade))):
+            manual_upgrades = upgradeable - upgrade
+            if len(upgrade) == 1:
+                single_service = upgrade.pop()
+                self.info("Upgrading {0}".format(single_service))
+                self.deploy(args.application, clean=True, service=single_service)
+            else:
+                self.info(
+                    "Upgrading all the automatically upgradeable services "
+                    "in {0}".format(args.application)
+                )
+                self.deploy(args.application, clean=True)
+            if manual_upgrades:
+                self.info("{0} must be upgraded manually.".format(", ".join(manual_upgrades)))
