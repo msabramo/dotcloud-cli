@@ -114,6 +114,9 @@ class CLI(object):
             self.info_output = sys.stderr
             p = get_parser(self.cmd)
             args = p.parse_args(args)
+            if args.debug is True:
+                self.debug = True
+                self.client.debug = True
             if not self.global_config.loaded and args.cmd != 'setup':
                 self.die('Not configured yet. Please run "{0} setup"'.format(self.cmd))
             self.load_local_config(args)
