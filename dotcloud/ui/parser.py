@@ -65,7 +65,7 @@ def get_parser(name='dotcloud'):
     # they all share --application
     common_parser = Parser(prog=name, add_help=False)
     common_parser.add_argument('--application', '-A', help='Specify the application')
-    common_parser.add_argument('--debug', '-d', action='store_true',
+    common_parser.add_argument('--debug', '-D', action='store_true',
             help='Enable debug messages (same than "export DOTCLOUD_DEBUG=true")')
 
     # The "connect" and "create" share some options, as "create" will
