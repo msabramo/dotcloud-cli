@@ -1190,10 +1190,10 @@ class CLI(object):
                 raw_ts = log.get('created_at')
                 if raw_ts is not None:
                     ts = self.iso_dtime_local(log['created_at'])
-                    if last_ts is None or (last_ts.day != ts.day
+                    if self.debug and (last_ts is None or (last_ts.day != ts.day
                             or last_ts.month != ts.month
                             or last_ts.year != ts.year
-                            ):
+                            )):
                         print '- {0} ({1} deployment, deploy_id={2})'.format(ts.date(),
                                 meta['application'], meta['deploy_id'])
                     last_ts = ts
@@ -1238,21 +1238,39 @@ class CLI(object):
         if lines is not None:
             url += '&lines={0}'.format(lines)
 
-        logs_meta, logs = self._stream_formated_logs(url, filter_svc, filter_inst)
-        for log, formated_line in logs:
+        last_read_ts = None
+        dot = False
+        retry = 10 if follow else 1
+        while retry > 0:
+            logs_meta, logs = self._stream_formated_logs(url, filter_svc, filter_inst)
+            for log, formated_line in logs:
 
-            if log.get('partial', False):
-                print formated_line, '\r',
-                sys.stdout.flush()
-            else:
-                print formated_line
+                ts = self.iso_dtime_local(log['created_at'])
+                if last_read_ts and last_read_ts >= ts:
+                    continue
+                last_read_ts = ts
 
-            status = log.get('status')
-            if status is not None:
-                if status == 'deploy_end':
-                    return 0
-                if status == 'deploy_fail':
-                    return 2
+                if log.get('partial', False):
+                    print formated_line, '\r',
+                    sys.stdout.flush()
+                else:
+                    print formated_line
+
+                status = log.get('status')
+                if status is not None:
+                    if status == 'deploy_end':
+                        return 0
+                    if status == 'deploy_fail':
+                        return 2
+
+            retry -= 1
+            if retry > 0:
+                dot = True
+                sys.stderr.write('.')
+                time.sleep(1)
+
+        if dot:
+            sys.stderr.write('\n')
 
         if not follow:
             return 0
