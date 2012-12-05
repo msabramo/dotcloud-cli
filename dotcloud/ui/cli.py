@@ -134,7 +134,7 @@ class CLI(object):
                 pass
             except urllib2.URLError as e:
                 self.error('Accessing dotCloud API failed: {0}'.format(str(e)))
-        except requests.ConnectionError, e:
+        except requests.ConnectionError as e:
             self.error('The server seems to be unresponsive. Please check that you are '
                 'connected to the Internet or try again later.\n'
                 'If the problem persists, issue a support ticket to support@dotcloud.com')
@@ -142,8 +142,8 @@ class CLI(object):
             if self.debug:
                 raise
             return 1
-        except Exception, e:
-            message = 'An unexpected error has occured: {exc}.\n'.format(exc=e)
+        except Exception as e:
+            message = u'An unexpected error has occured: {exc}.\n'.format(exc=e)
             if global_endpoint_info:
                 message += ('The remote server handling the last request was '
                             '{remotehost}:{remoteport}.\n'
