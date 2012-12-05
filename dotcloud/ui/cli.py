@@ -510,8 +510,12 @@ class CLI(object):
             url = '/applications/{0}/services/{1}/domains' \
                 .format(args.application, args.service)
             res = self.user.post(url, {'domain': args.domain})
+            http_gateway = res.item.get('gateway')
             self.success('domain "{0}" created for "{1}"'.format(
                 args.domain, args.service))
+            if http_gateway:
+                self.success('Now please add the following DNS record:\n'
+                        '{0}. IN CNAME {1}.'.format(args.domain, http_gateway))
         elif args.subcmd == 'rm':
             url = '/applications/{0}/services/{1}/domains/{2}' \
                 .format(args.application, args.service, args.domain)
