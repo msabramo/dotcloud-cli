@@ -1120,12 +1120,9 @@ class CLI(object):
 
     def iso_dtime_local(self, strdate):
         try:
-            bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%S.%fZ")
+            return datetime.datetime.strptime(strdate, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
-            bt = time.strptime(strdate, "%Y-%m-%dT%H:%M:%SZ")
-        ts = calendar.timegm(bt)
-        dt = datetime.datetime.fromtimestamp(ts)
-        return dt
+            return datetime.datetime.strptime(strdate, "%Y-%m-%dT%H:%M:%SZ")
 
     def cmd_activity(self, args):
         if not args.all and args.application:
