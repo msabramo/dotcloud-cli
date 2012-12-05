@@ -1053,6 +1053,15 @@ class CLI(object):
                 service['name'], instance_id))
         instance = instance[0]
 
+        if instance.get('hibernating', False):
+            self.error('It looks like your container is currently hibernating '
+                'and can\'t be accessed through SSH. Please issue an HTTP '
+                'request to your application in order to wake it up.')
+            self.info('Sandbox applications are put in hibernation when they '
+                'don\'t receive traffic for a given amount of time. Upgrade '
+                'to live to remove this limitation.')
+            self.die('Wake up your application and try again.')
+
         try:
             ssh_endpoint = filter(lambda p: p['name'] == 'ssh',
                     instance.get('ports', []))[0]['url']
