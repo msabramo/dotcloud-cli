@@ -77,7 +77,11 @@ class CLI(object):
         (system, node, release, version, machine, processor) = platform.uname()
         pyimpl = platform.python_implementation()
         pyver = platform.python_version()
-        (langcode, encoding) = locale.getdefaultlocale()
+        (langcode, encoding) = ('en_US', 'UTF-8')
+        try:
+            (langcode, encoding) = locale.getdefaultlocale()
+        except ValueError:
+            pass
         return 'dotcloud-cli/{cliver} ({system}; {release}; ' \
                 '{machine}; {pyimpl}; {pyver}; {langcode})'.format(
                 cliver=self.__version__, **locals())
