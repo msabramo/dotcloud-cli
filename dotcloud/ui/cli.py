@@ -1246,7 +1246,6 @@ class CLI(object):
             url += '&lines={0}'.format(lines)
 
         last_read_ts = None
-        dot = False
         retry = 10 if follow else 1
         while retry > 0:
             logs_meta, logs = self._stream_formated_logs(url, filter_svc, filter_inst)
@@ -1272,12 +1271,8 @@ class CLI(object):
 
             retry -= 1
             if retry > 0:
-                dot = True
                 sys.stderr.write('.')
                 time.sleep(1)
-
-        if dot:
-            sys.stderr.write('\n')
 
         if not follow:
             return 0
