@@ -1119,6 +1119,9 @@ class CLI(object):
                     args.application))
         return self.spawn_ssh(ssh_endpoint, cmd).wait()
 
+    def cmd_ssh(self, args):
+        self.warning('This command is deprecated. Use "dotcloud run" instead.')
+
     def parse_url(self, url):
         m = re.match('^(?P<scheme>[^:]+)://((?P<user>[^@]+)@)?(?P<host>[^:/]+)(:(?P<port>\d+))?(?P<path>/.*)?$', url)
         if not m:

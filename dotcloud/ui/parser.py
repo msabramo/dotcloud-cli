@@ -167,6 +167,10 @@ def get_parser(name='dotcloud'):
     run.add_argument('args', nargs=argparse.REMAINDER, metavar='...',
             help='Any arguments to the command')
 
+    # dotcloud ssh (alias to run)
+    ssh = subcmd.add_parser('ssh',
+            help='DEPRECATED. Use "dotcloud run"', add_help=False)
+
     # dotcloud push
     push = subcmd.add_parser('push', help='Push the code', parents=[common_parser])
     push.add_argument('path', nargs='?', default=None,
