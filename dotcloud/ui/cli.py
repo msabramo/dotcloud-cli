@@ -934,8 +934,13 @@ class CLI(object):
     def get_local_branch_git(self, args):
         git_cmd = ['git', 'symbolic-ref', 'HEAD']
         try:
-            ref = subprocess.check_output(git_cmd, close_fds=True,
-                    cwd=args.path)
+            try:
+                ref = subprocess.check_output(git_cmd, close_fds=True,
+                        cwd=args.path)
+            except AttributeError:
+                # Python < 2.7
+                p = subprocess.Popen(git_cmd, stdout=subprocess.PIPE)
+                ref = p.communicate()[0]
         except subprocess.CalledProcessError:
             self.die('Unable to determine the active branch (git)')
         except OSError:
