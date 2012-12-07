@@ -1336,12 +1336,18 @@ class CLI(object):
             url += '&filter={0}'.format(','.join(args.service_or_instance))
 
         logs_meta, logs = self._stream_formated_logs(url)
+        empty = True
         for log, formated_line, in logs:
+            empty = False
             if log.get('partial', False):
                 print formated_line, '\r',
                 sys.stdout.flush()
             else:
                 print formated_line
+
+        if empty is True and args.service_or_instance:
+            self.warning('Nothing to show... Does the service named \"{0}\" exist?'.format(
+                args.service_or_instance[0]))
 
     @app_local
     def cmd_revisions(self, args):
