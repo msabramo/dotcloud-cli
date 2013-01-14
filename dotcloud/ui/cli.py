@@ -811,29 +811,39 @@ class CLI(object):
 
         return ('--' + arg, args_proto_map[arg])
 
+    def _yml_exists_check(self, args):
+        root = getattr(self, 'local_config_root', None)
+        if args.path is not None :
+            if not os.path.exists(os.path.join(args.path, 'dotcloud.yml')):
+                question = "No 'dotcloud.yml' found in '{0}'\n"\
+                    "Are you sure you entered the correct directory path?".format(
+                        args.path
+                )
+                if not self.confirm(question):
+                    self.die()
+        else :
+            if root is None :
+                if not os.path.exists('dotcloud.yml'):
+                    question = "No 'dotcloud.yml' found in '{0}'\n" \
+                        "Are you sure you are in the correct directory?".format(
+                            os.getcwd()
+                    )
+                    if not self.confirm(question):
+                        self.die()
+            else :
+                if not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
+                    question = "No 'dotcloud.yml' found in '{0}',\n" \
+                        "the closest parent folder connected to an application.\n" \
+                        "Did you forget to create a 'dotcloud.yml'?" \
+                        "Continue?".format(
+                        self.local_config_root
+                    )
+                    if not self.confirm(question):
+                        self.die()
+
     @app_local
     def cmd_push(self, args):
-        root = getattr(self, 'local_config_root', None)
-        if args.path is not None and not os.path.exists(os.path.join(args.path, 'dotcloud.yml')):
-            self.die(
-                "No 'dotcloud.yml' found in '{0}'\n"
-                "Are you sure you entered the correct directory path?".format(
-                    args.path,
-            ))
-        elif args.path is None:
-            if root is None and not os.path.exists('dotcloud.yml'):
-                self.die(
-                    "No 'dotcloud.yml' found in '{0}'\n"
-                    "Are you sure you are in the correct directory ?".format(
-                        os.getcwd(),
-                ))
-            elif not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
-                self.die(
-                    "No 'dotcloud.yml' found in '{0}',\n"
-                    "the closest parent folder connected to an application.\n"
-                    "Did you forget to create a 'dotcloud.yml'?".format(
-                        self.local_config_root,
-                ))
+        self._yml_exists_check(args)
 
         protocol = self._selected_push_protocol(args, use_local_config=True)[1]
         branch = self.local_config.get('push_branch') \
