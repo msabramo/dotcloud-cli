@@ -65,26 +65,28 @@ class RESTClient(object):
 
     def get(self, path='', streaming=False):
         return self.make_response(self.session.get(self.build_url(path),
-            prefetch=not streaming), streaming)
+            prefetch=not streaming, timeout=180), streaming)
 
     def post(self, path='', payload={}):
         return self.make_response(
             self.session.post(self.build_url(path), data=json.dumps(payload),
-                headers={'Content-Type': 'application/json'}))
+                headers={'Content-Type': 'application/json'}, timeout=180))
 
     def put(self, path='', payload={}):
         return self.make_response(
-            self.session.put(self.build_url(path), data=json.dumps(payload),
+            self.session.put(self.build_url(path),
+                data=json.dumps(payload), timeout=180,
                 headers={'Content-Type': 'application/json'}))
 
     def delete(self, path=''):
         return self.make_response(
-            self.session.delete(self.build_url(path),
+            self.session.delete(self.build_url(path), timeout=180,
                 headers={'Content-Length': '0'}))
 
     def patch(self, path='', payload={}):
         return self.make_response(
-            self.session.patch(self.build_url(path), data=json.dumps(payload),
+            self.session.patch(self.build_url(path), timeout=180,
+                data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'}))
 
     def make_response(self, res, streaming=False):
