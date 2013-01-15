@@ -2,11 +2,13 @@ import requests
 import json
 import sys
 import os
+import httplib
 
 from .auth import BasicAuth, OAuth2Auth, NullAuth
 from .response import *
 from .errors import RESTAPIError, AuthenticationNotConfigured
 
+httplib.HTTPConnection.debuglevel = 1
 
 class RESTClient(object):
     def __init__(self, endpoint='https://rest.dotcloud.com/v1',
