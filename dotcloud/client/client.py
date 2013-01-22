@@ -2,13 +2,12 @@ import requests
 import json
 import sys
 import os
+import time
 
 from .auth import BasicAuth, OAuth2Auth, NullAuth
 from .response import *
 from .errors import RESTAPIError, AuthenticationNotConfigured
 
-requests.packages.urllib3.connectionpool.HTTPSConnection.debuglevel = 1
-requests.packages.urllib3.connectionpool.HTTPConnection.debuglevel = 1
 
 class RESTClient(object):
     def __init__(self, endpoint='https://rest.dotcloud.com/v1',
@@ -19,6 +18,9 @@ class RESTClient(object):
         self._make_session()
         self._user_agent = user_agent
         self._version_checker = version_checker
+        if self.debug:
+            requests.packages.urllib3.connectionpool.HTTPSConnection.debuglevel = 1
+            requests.packages.urllib3.connectionpool.HTTPConnection.debuglevel = 1
 
     def make_prefix_client(self, prefix=''):
         subclient = RESTClient(
@@ -71,11 +73,10 @@ class RESTClient(object):
             try:
                 return self.make_response(self.session.get(self.build_url(path),
                     prefetch=not streaming, timeout=180), streaming)
-            except:
-                if i < 4:
-                    pass
-                else:
+            except requests.exceptions.RequestException:
+                if i >= 4:
                     raise
+                time.sleep(1)
 
 
     def post(self, path='', payload={}):
@@ -84,11 +85,10 @@ class RESTClient(object):
                 return self.make_response(
                     self.session.post(self.build_url(path), data=json.dumps(payload),
                         headers={'Content-Type': 'application/json'}, timeout=180))
-            except:
-                if i < 4:
-                    pass
-                else:
+            except requests.exceptions.RequestException:
+                if i >= 4:
                     raise
+                time.sleep(1)
 
     def put(self, path='', payload={}):
         for i in xrange(0, 5):
@@ -97,11 +97,10 @@ class RESTClient(object):
                     self.session.put(self.build_url(path),
                         data=json.dumps(payload), timeout=180,
                         headers={'Content-Type': 'application/json'}))
-            except:
-                if i < 4:
-                    pass
-                else:
+            except requests.exceptions.RequestException:
+                if i >= 4:
                     raise
+                time.sleep(1)
 
     def delete(self, path=''):
         for i in xrange(0, 5):
@@ -109,11 +108,10 @@ class RESTClient(object):
                 return self.make_response(
                     self.session.delete(self.build_url(path), timeout=180,
                     headers={'Content-Length': '0'}))
-            except:
-                if i < 4:
-                    pass
-                else:
+            except requests.exceptions.RequestException:
+                if i >= 4:
                     raise
+                time.sleep(1)
 
     def patch(self, path='', payload={}):
         for i in xrange(0, 5):
@@ -122,11 +120,10 @@ class RESTClient(object):
                     self.session.patch(self.build_url(path), timeout=180,
                     data=json.dumps(payload),
                     headers={'Content-Type': 'application/json'}))
-            except:
-                if i < 4:
-                    pass
-                else:
+            except requests.exceptions.RequestException:
+                if i >= 4:
                     raise
+                time.sleep(1)
 
     def make_response(self, res, streaming=False):
         trace_id = res.headers.get('X-DotCloud-TraceID')
