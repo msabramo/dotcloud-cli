@@ -757,19 +757,7 @@ class CLI(object):
         if service is None:
             urls = {}
             url = '/applications/{0}/services'.format(application)
-
-            # This seems to fail more often than we'd like to, maybe retry a few times before giving up?
-            for i in xrange(0, 5):
-                ok = False
-                try:
-                    res = self.user.get(url)
-                    ok = True
-                except:
-                    pass
-                finally:
-                    if ok:
-                        break
-
+            res = self.user.get(url)
             for service in res.items:
                 domains = service.get('domains')
                 if domains:
