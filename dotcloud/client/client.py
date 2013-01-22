@@ -2,6 +2,7 @@ import requests
 import json
 import sys
 import os
+import time
 
 from .auth import BasicAuth, OAuth2Auth, NullAuth
 from .response import *
@@ -17,6 +18,9 @@ class RESTClient(object):
         self._make_session()
         self._user_agent = user_agent
         self._version_checker = version_checker
+        if self.debug:
+            requests.packages.urllib3.connectionpool.HTTPSConnection.debuglevel = 1
+            requests.packages.urllib3.connectionpool.HTTPConnection.debuglevel = 1
 
     def make_prefix_client(self, prefix=''):
         subclient = RESTClient(
@@ -57,6 +61,7 @@ class RESTClient(object):
                 trace_id=response.headers['X-DotCloud-TraceID'])
         return r
 
+
     def build_url(self, path):
         if path == '' or path.startswith('/'):
             return self.endpoint + path
@@ -64,28 +69,61 @@ class RESTClient(object):
             return path
 
     def get(self, path='', streaming=False):
-        return self.make_response(self.session.get(self.build_url(path),
-            prefetch=not streaming), streaming)
+        for i in xrange(0, 5):
+            try:
+                return self.make_response(self.session.get(self.build_url(path),
+                    prefetch=not streaming, timeout=180), streaming)
+            except requests.exceptions.RequestException:
+                if i >= 4:
+                    raise
+                time.sleep(1)
+
 
     def post(self, path='', payload={}):
-        return self.make_response(
-            self.session.post(self.build_url(path), data=json.dumps(payload),
-                headers={'Content-Type': 'application/json'}))
+        for i in xrange(0, 5):
+            try:
+                return self.make_response(
+                    self.session.post(self.build_url(path), data=json.dumps(payload),
+                        headers={'Content-Type': 'application/json'}, timeout=180))
+            except requests.exceptions.RequestException:
+                if i >= 4:
+                    raise
+                time.sleep(1)
 
     def put(self, path='', payload={}):
-        return self.make_response(
-            self.session.put(self.build_url(path), data=json.dumps(payload),
-                headers={'Content-Type': 'application/json'}))
+        for i in xrange(0, 5):
+            try:
+                return self.make_response(
+                    self.session.put(self.build_url(path),
+                        data=json.dumps(payload), timeout=180,
+                        headers={'Content-Type': 'application/json'}))
+            except requests.exceptions.RequestException:
+                if i >= 4:
+                    raise
+                time.sleep(1)
 
     def delete(self, path=''):
-        return self.make_response(
-            self.session.delete(self.build_url(path),
-                headers={'Content-Length': '0'}))
+        for i in xrange(0, 5):
+            try:
+                return self.make_response(
+                    self.session.delete(self.build_url(path), timeout=180,
+                    headers={'Content-Length': '0'}))
+            except requests.exceptions.RequestException:
+                if i >= 4:
+                    raise
+                time.sleep(1)
 
     def patch(self, path='', payload={}):
-        return self.make_response(
-            self.session.patch(self.build_url(path), data=json.dumps(payload),
-                headers={'Content-Type': 'application/json'}))
+        for i in xrange(0, 5):
+            try:
+                return self.make_response(
+                    self.session.patch(self.build_url(path), timeout=180,
+                    data=json.dumps(payload),
+                    headers={'Content-Type': 'application/json'}))
+            except requests.exceptions.RequestException:
+                if i >= 4:
+                    raise
+                time.sleep(1)
 
     def make_response(self, res, streaming=False):
         trace_id = res.headers.get('X-DotCloud-TraceID')
