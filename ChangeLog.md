@@ -4,7 +4,7 @@ Changelog
 v0.9.4
 ------
 
-- Improved fault tolerance at the request-level
+- Improved fault tolerance at the request-level (should get rid of the *"Max retries exceeded"* error)
 - Improved application feedback when pushing code from a child directory of a connected application.
 
 v0.9.3
