@@ -38,8 +38,9 @@ class RESTClient(object):
             'pre_request': self._pre_request_hook,
             'response': self._response_hook
         }
-        self.session = requests.session(headers=headers, hooks=hooks,
-            verify=True)
+        self.session = requests.session()
+        self.session.headers = headers
+        self.session.hooks = hooks
 
     def _pre_request_hook(self, request):
         if self._user_agent:
