@@ -147,7 +147,7 @@ class CLI(object):
                 raise
             return 1
         except Exception as e:
-            message = u'An unexpected error has occured: {exc}.\n'.format(exc=e)
+            message = u'An unexpected error has occurred: {exc}.\n'.format(exc=e)
             if global_endpoint_info:
                 message += ('The remote server handling the last request was '
                             '{remotehost}:{remoteport}.\n'
