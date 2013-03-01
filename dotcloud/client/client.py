@@ -55,7 +55,7 @@ class RESTClient(object):
         return r
 
     def _response_hook(self, response):
-        r = self.authenticator.response_hook(response)
+        r = self.authenticator.response_hook(self.session, response)
         if self.debug:
             print >>sys.stderr, '### {code} TraceID:{trace_id}'.format(
                 code=response.status_code,
@@ -72,8 +72,7 @@ class RESTClient(object):
     def get(self, path='', streaming=False):
         for i in xrange(0, 5):
             try:
-                return self.make_response(self.session.get(self.build_url(path),
-                    prefetch=not streaming, timeout=180), streaming)
+                return self.make_response(self.session.get(self.build_url(path), timeout=180), streaming)
             except requests.exceptions.RequestException:
                 if i >= 4:
                     raise
