@@ -274,7 +274,7 @@ class CLI(object):
 
     def prompt(self, prompt, noecho=False):
         method = getpass.getpass if noecho else raw_input
-        input = method(prompt + ': ')
+        input = method(prompt + ': '.encode('ascii'))
         return input
 
     def confirm(self, prompt, default='n'):
