@@ -53,7 +53,7 @@ setup(
     scripts  = [
         'bin/dotcloud'
     ],
-    install_requires = ['argparse', 'requests==1.1.0', 'colorama'],
+    install_requires = ['argparse', 'requests>=1.1.0,<1.3.0', 'colorama'],
     zip_safe = False,
     description = 'dotCloud command-line interface client',
     long_description =
