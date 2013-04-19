@@ -28,7 +28,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '0.9.4'
+VERSION = '0.9.5'
 
 if sys.argv[-1] == 'publish':
     os.system('rm -rf *.egg-info')
