@@ -54,7 +54,7 @@ class RESTClient(object):
             )
         return request
 
-    def _response_hook(self, response):
+    def _response_hook(self, response, **kw):
         r = self.authenticator.response_hook(self.session, response)
         if self.debug:
             print >>sys.stderr, '### {code} TraceID:{trace_id}'.format(
