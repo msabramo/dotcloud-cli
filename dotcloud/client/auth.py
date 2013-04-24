@@ -41,14 +41,13 @@ class OAuth2Auth(BaseAuth):
         request.headers.setdefault('Authorization',
             'Bearer {0}'.format(self.access_token))
 
-    def response_hook(self, response):
+    def response_hook(self, session, response):
         if response.status_code == requests.codes.unauthorized:
             if self._retry_count >= 1:
                 return
             self._retry_count += 1
             if self.refresh_credentials():
-                response.request.send(anyway=True)
-                return response.request.response  # override response
+                return session.send(response.request)  # override response
 
     def refresh_credentials(self):
         data = {

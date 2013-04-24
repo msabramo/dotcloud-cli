@@ -34,33 +34,33 @@ class RESTClient(object):
     def _make_session(self):
         headers = {'Accept': 'application/json'}
         hooks = {
-            'args': lambda args: self.authenticator.args_hook(args),
-            'pre_request': self._pre_request_hook,
             'response': self._response_hook
         }
-        self.session = requests.session(headers=headers, hooks=hooks,
-            verify=True)
+        self.session = requests.session()
+        self.session.headers = headers
+        self.session.hooks = hooks
+        self.session.auth = self._request_hook
 
-    def _pre_request_hook(self, request):
+    def _request_hook(self, request):
         if self._user_agent:
             request.headers['User-Agent'] = self._user_agent
-        r = self.authenticator.pre_request_hook(request)
+
+        self.authenticator.pre_request_hook(request)
         if self.debug:
             print >>sys.stderr, '### {method} {url} data={data}'.format(
                 method  = request.method,
                 url     = request.path_url,
-                data    = request.data
+                data    = request.body
             )
-        return r
+        return request
 
-    def _response_hook(self, response):
-        r = self.authenticator.response_hook(response)
+    def _response_hook(self, response, **kw):
+        r = self.authenticator.response_hook(self.session, response)
         if self.debug:
             print >>sys.stderr, '### {code} TraceID:{trace_id}'.format(
                 code=response.status_code,
                 trace_id=response.headers['X-DotCloud-TraceID'])
         return r
-
 
     def build_url(self, path):
         if path == '' or path.startswith('/'):
@@ -68,62 +68,43 @@ class RESTClient(object):
         else:
             return path
 
-    def get(self, path='', streaming=False):
-        for i in xrange(0, 5):
-            try:
-                return self.make_response(self.session.get(self.build_url(path),
-                    prefetch=not streaming, timeout=180), streaming)
-            except requests.exceptions.RequestException:
-                if i >= 4:
-                    raise
-                time.sleep(1)
+    def request(self, method, path, streaming=False, **kw):
+        url = self.build_url(path)
+        self.authenticator.args_hook(kw)
 
+        def do_request():
+            return self.make_response(
+                    self.session.request(
+                        method, url, **kw),
+                    streaming
+                    )
+
+        for i in range(4):
+            try:
+                return do_request()
+            except requests.exceptions.RequestException:
+                time.sleep(1)
+        return do_request()
+
+    def get(self, path='', streaming=False):
+        return self.request('GET', path, streaming, timeout=180)
 
     def post(self, path='', payload={}):
-        for i in xrange(0, 5):
-            try:
-                return self.make_response(
-                    self.session.post(self.build_url(path), data=json.dumps(payload),
-                        headers={'Content-Type': 'application/json'}, timeout=180))
-            except requests.exceptions.RequestException:
-                if i >= 4:
-                    raise
-                time.sleep(1)
+        return self.request('POST', path,
+                            data=json.dumps(payload), headers={'Content-Type': 'application/json'})
 
     def put(self, path='', payload={}):
-        for i in xrange(0, 5):
-            try:
-                return self.make_response(
-                    self.session.put(self.build_url(path),
-                        data=json.dumps(payload), timeout=180,
-                        headers={'Content-Type': 'application/json'}))
-            except requests.exceptions.RequestException:
-                if i >= 4:
-                    raise
-                time.sleep(1)
+        return self.request('PUT', path,
+                            data=json.dumps(payload), headers={'Content-Type': 'application/json'})
 
     def delete(self, path=''):
-        for i in xrange(0, 5):
-            try:
-                return self.make_response(
-                    self.session.delete(self.build_url(path), timeout=180,
-                    headers={'Content-Length': '0'}))
-            except requests.exceptions.RequestException:
-                if i >= 4:
-                    raise
-                time.sleep(1)
+        return self.request('DELETE', path, headers={'Content-Length': '0'})
 
     def patch(self, path='', payload={}):
-        for i in xrange(0, 5):
-            try:
-                return self.make_response(
-                    self.session.patch(self.build_url(path), timeout=180,
-                    data=json.dumps(payload),
-                    headers={'Content-Type': 'application/json'}))
-            except requests.exceptions.RequestException:
-                if i >= 4:
-                    raise
-                time.sleep(1)
+        return self.request('DELETE', path,
+                            headers={'Content-Type': 'application/json'},
+                            data=json.dumps(payload),
+                            )
 
     def make_response(self, res, streaming=False):
         trace_id = res.headers.get('X-DotCloud-TraceID')
