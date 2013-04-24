@@ -75,7 +75,7 @@ class RESTClient(object):
         def do_request():
             return self.make_response(
                     self.session.request(
-                        method, url, **kw),
+                        method, url, stream=streaming, **kw),
                     streaming
                     )
 
