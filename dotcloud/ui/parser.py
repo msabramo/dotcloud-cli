@@ -66,7 +66,7 @@ def get_parser(name='dotcloud'):
     common_parser = Parser(prog=name, add_help=False)
     common_parser.add_argument('--application', '-A', help='Specify the application')
     common_parser.add_argument('--debug', '-D', action='store_true',
-            help='Enable debug messages (same than "export DOTCLOUD_DEBUG=true")')
+            help='Enable debug messages (same as "export DOTCLOUD_DEBUG=true")')
 
     # The "connect" and "create" share some options, as "create" will
     # offer to connect the current directory to the new application.
@@ -113,12 +113,12 @@ def get_parser(name='dotcloud'):
     # dotcloud create
     create = subcmd.add_parser('create', help='Create a new application',
             parents=[connect_options_parser])
-    create.add_argument('--flavor', '-f', default='sandbox',
-            help='Choose a flavor for your application. Defaults to sandbox.')
+    create.add_argument('--flavor', '-f', default='live',
+            help='Choose a flavor for your application. Defaults to live, a paid service.')
     create.add_argument('application', help='Specify the application')
 
     # dotcloud destroy
-    destroy = subcmd.add_parser('destroy', help='Destroy an existing app',
+    destroy = subcmd.add_parser('destroy', help='Destroy a whole app or a specific service',
             parents=[common_parser])
     destroy.add_argument('service', nargs='?', help='Specify the service')
 
@@ -190,7 +190,7 @@ def get_parser(name='dotcloud'):
                  '(by default, use the latest one)')
 
     # dotcloud deploy revision
-    deploy = subcmd.add_parser('deploy', help='Deploy a specific version',
+    deploy = subcmd.add_parser('deploy', help='Deploy a specific revision',
             parents=[common_parser])
     deploy.add_argument('revision',
             help='Revision to deploy (Symbolic revisions "latest" and "previous" are supported)')
