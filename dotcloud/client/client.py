@@ -101,7 +101,7 @@ class RESTClient(object):
         return self.request('DELETE', path, headers={'Content-Length': '0'})
 
     def patch(self, path='', payload={}):
-        return self.request('DELETE', path,
+        return self.request('PATCH', path,
                             headers={'Content-Type': 'application/json'},
                             data=json.dumps(payload),
                             )
