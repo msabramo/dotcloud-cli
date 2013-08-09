@@ -435,6 +435,87 @@ class CLI(object):
         if self.confirm('Connect the current directory to "{0}"?'.format(args.application), 'y'):
             self._connect(args)
 
+    def cmd_traffic(self, args):
+        
+        duration = self.parse_duration(args.duration)
+        self.info('Retrieving traffic metrics on {0} for the {1}'.format(args.application, duration))
+        url = '/applications/{0}/metrics/http?range={1}'.format(args.application, args.duration)
+        
+        # dictionary of the array that is returned by the service    
+        # [0] 1373387184, # timestamp
+        # [1] 4.808187, # 2xxs req/sec
+        # [2] 0, # 3xxs req/sec
+        # [3] 3.4046783, # 4xxs req/sec
+        # [4] 0, # 5xxs req/sec
+        # [5] 0.6730711, # application latency
+        # [6] 0.0046018595 # platform latency
+
+        
+        try:
+            res = self.user.get(url)  
+            services_table = [
+                [
+                    'time',
+                    '2xx',
+                    '3xx',
+                    '4xx',
+                    '5xx',
+                    'total req/sec',
+                    'platform latency',
+                    'application latency',
+                    'total latency'
+                ]
+            ]
+            for metric in res.items:
+                services_table.append([
+                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(metric[0])),
+                    int(metric[1]),
+                    int(metric[2]),
+                    int(metric[3]),
+                    int(metric[4]),
+                    int(metric[1]+metric[2]+metric[3]+metric[4]),
+                    '{0} ms'.format(int(metric[6]*1000)),
+                    '{0} ms'.format(int(metric[5]*1000)),
+                    '{0} ms'.format(int(metric[6]*1000 + metric[5]*1000))
+                ])
+            pprint_table(services_table)
+        except RESTAPIError as e:
+            self.die('Retrieving traffic metrics failed: {1}'.format(args.application, e))
+
+    def cmd_memory(self, args):
+        
+        duration = self.parse_duration(args.duration)
+        service_name, instance_id = self.parse_service_instance(args.service_or_instance, args.cmd)
+        self.info('Retrieving memory metrics on {0}.{1} for the {2}'.format(service_name, instance_id, duration))
+        url = '/applications/{0}/services/{1}/instances/{2}/metrics/memory?range={3}' \
+            .format(args.application, service_name, instance_id, args.duration)
+        
+        # dictionary of the array that is returned by the service    
+        # [0] 1376073600, # timestamp
+        # [1] 4.2341864E7, # inactive + active page size + resident state size (total used)
+        # [2] 1.34217728E8, # memory size at time
+        # [3] 1861094.4,
+        # [4] 49.1875864E7, # unused memory
+        # [5] 4.0493056E7, # resident set size
+        # [6] 339968,
+        # [7] 240588.8, # active page cache
+        # [8] 1268249.6 # inactive page cache
+        
+        try:
+            res = self.user.get(url)  
+            services_table = [ ['time', 'overage', 'unused', 'used', 'total'] ]
+            for metric in res.items:
+                services_table.append([
+                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(metric[0])),
+                    bytes2human(metric[2]-metric[1]) if metric[1] > metric[2] else bytes2human(0),
+                    bytes2human(metric[4]),
+                    bytes2human(metric[1]),
+                    bytes2human(metric[2]),
+                ])
+            pprint_table(services_table)
+        except RESTAPIError as e:
+            self.die('Retrieving memory metrics failed: {1}'.format(args.application, e))
+
     def cmd_connect(self, args):
         url = '/applications/{0}'.format(args.application)
         try:
@@ -1032,6 +1113,24 @@ class CLI(object):
         for c in ('`', '$', '"'):
             s = s.replace(c, '\\' + c)
         return s
+
+    def parse_duration(self, duration):
+        message = ''
+        if duration == '1h':
+            message = 'last 60 minutes'
+        elif duration == '6h':
+            message = 'last 6 hours'
+        elif duration == '1d':
+            message = 'last 24 hours'
+        elif duration == '1w':
+            message = 'last 7 days'
+        elif duration == '1M':
+            message = 'last 30 days'
+        else:
+            self.error('Invalid duration identifier: {0}'.format(duration))
+            self.info('Valid options are: 1h (last 60 minutes), 6h (last 6 hours), 1d (last 24 hours), 1w (last 7 days), 1M (last 30 days)'.format())
+            self.die()
+        return message
 
     def parse_service_instance(self, service_or_instance, command):
         if '.' not in service_or_instance:

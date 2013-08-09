@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v0.9.5
+------
+
+- Added 'traffic' command to retrieve traffic metrics from the API including request/second and latency for an application
+- Added 'memory' command to retrieve memory metrics from the API including memory used, memory unused, and memory available
+
 v0.9.4
 ------
 
