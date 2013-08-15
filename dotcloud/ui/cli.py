@@ -846,17 +846,19 @@ class CLI(object):
         self._yml_exists_check(args)
 
         protocol = self._selected_push_protocol(args, use_local_config=True)[1]
-        branch = self.local_config.get('push_branch') \
-                if protocol != 'rsync' else None
+        branch = None
         commit = None
         parameters = ''
 
-        if args.git or args.hg:
+        if protocol != 'rsync':
+            branch = args.branch or self.local_config.get('push_branch')
             if args.commit:
                 commit = args.commit
                 parameters = '?commit={0}'.format(args.commit)
             else:
                 branch = args.branch
+                # If we weren't passed a branch and don't have a
+                # default one, then get the current branch          
                 if not branch:
                     get_local_branch = getattr(self,
                             'get_local_branch_{0}'.format(protocol), None)
