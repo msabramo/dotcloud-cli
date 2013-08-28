@@ -118,7 +118,7 @@ class CLI(object):
             self.info_output = sys.stderr
             p = get_parser(self.cmd)
             args = p.parse_args(args)
-            if args.debug:
+            if args.debug is True:
                 self.debug = True
                 self.client.debug = True
             if not self.global_config.loaded and args.cmd != 'setup':
@@ -503,11 +503,11 @@ class CLI(object):
         
         try:
             res = self.user.get(url)  
-            services_table = [ ['time', 'overage', 'unused', 'used', 'total'] ]
+            services_table = [ ['time', 'overage', 'unused', 'used', 'allocated'] ]
             for metric in res.items:
                 services_table.append([
                     time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(metric[0])),
-                    bytes2human(metric[2]-metric[1]) if metric[1] > metric[2] else bytes2human(0),
+                    bytes2human(abs(metric[2]-metric[1])) if metric[1] > metric[2] else bytes2human(0),
                     bytes2human(metric[4]),
                     bytes2human(metric[1]),
                     bytes2human(metric[2]),
