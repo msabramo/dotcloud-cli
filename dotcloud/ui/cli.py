@@ -1129,7 +1129,7 @@ class CLI(object):
             message = 'last 30 days'
         else:
             self.error('Invalid duration identifier: {0}'.format(duration))
-            self.info('Valid options are: 1h (last 60 minutes), 6h (last 6 hours), 1d (last 24 hours), 1w (last 7 days), 1M (last 30 days)'.format())
+            self.info('Valid options are: 1h (last 60 minutes), 6h (last 6 hours), 1d (last 24 hours), 1w (last 7 days), 1M (last 30 days)')
             self.die()
         return message
 
