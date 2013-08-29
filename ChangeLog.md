@@ -5,6 +5,8 @@ v0.9.7
 ------
 
 - Added support for requests 1.1.0, 1.2.0
+- Added `traffic` command to retrieve traffic metrics from the API including request/second and latency for an application
+- Added `memory` command to retrieve memory metrics from the API including memory used, memory unused, and memory available
 - rsync should know display progress when uploading during `dotcloud push`.
 - Fixed bug: password prompt should not break anymore on Windows
 - Fixed bug with `--branch` argument when using git or hg to push

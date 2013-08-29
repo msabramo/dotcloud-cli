@@ -167,6 +167,20 @@ def get_parser(name='dotcloud'):
     run.add_argument('args', nargs=argparse.REMAINDER, metavar='...',
             help='Any arguments to the command')
 
+    # dotcloud memory
+    memory = subcmd.add_parser('memory',
+            help='Gets memory metrics for a specific service and instance',
+            parents=[common_parser])
+    memory.add_argument('service_or_instance',
+            help='Open a shell or run the command on a specific instance of a given service (ex: www.1)')
+    memory.add_argument('duration', help="Specify the duration of time to receive data (ex: 1h for last 60 minutes)")
+
+    # dotcloud traffic
+    traffic = subcmd.add_parser('traffic',
+            help='Gets traffic metrics for your application',
+            parents=[common_parser])
+    traffic.add_argument('duration', help="Specify the duration of time to receive data (ex: 1h for last 60 minutes)")
+
     # dotcloud ssh (alias to run)
     ssh = subcmd.add_parser('ssh',
             help='DEPRECATED. Use "dotcloud run"', add_help=False)
