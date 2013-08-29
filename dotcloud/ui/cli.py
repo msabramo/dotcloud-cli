@@ -100,6 +100,7 @@ class CLI(object):
         elif self.global_config.get('apikey'):
             access_key, secret = self.global_config.get('apikey').split(':')
             self.client.authenticator = BasicAuth(access_key, secret)
+            self.user.authenticator = self.client.authenticator
 
     def pre_refresh_token(self, req):
         self.info('Refreshing OAuth2 token...')
@@ -435,12 +436,12 @@ class CLI(object):
             self._connect(args)
 
     def cmd_traffic(self, args):
-        
+
         duration = self.parse_duration(args.duration)
         self.info('Retrieving traffic metrics on {0} for the {1}'.format(args.application, duration))
         url = '/applications/{0}/metrics/http?range={1}'.format(args.application, args.duration)
-        
-        # dictionary of the array that is returned by the service    
+
+        # dictionary of the array that is returned by the service
         # [0] 1373387184, # timestamp
         # [1] 4.808187, # 2xxs req/sec
         # [2] 0, # 3xxs req/sec
@@ -449,9 +450,9 @@ class CLI(object):
         # [5] 0.6730711, # application latency
         # [6] 0.0046018595 # platform latency
 
-        
+
         try:
-            res = self.user.get(url)  
+            res = self.user.get(url)
             services_table = [
                 [
                     'time',
@@ -482,14 +483,14 @@ class CLI(object):
             self.die('Retrieving traffic metrics failed: {1}'.format(args.application, e))
 
     def cmd_memory(self, args):
-        
+
         duration = self.parse_duration(args.duration)
         service_name, instance_id = self.parse_service_instance(args.service_or_instance, args.cmd)
         self.info('Retrieving memory metrics on {0}.{1} for the {2}'.format(service_name, instance_id, duration))
         url = '/applications/{0}/services/{1}/instances/{2}/metrics/memory?range={3}' \
             .format(args.application, service_name, instance_id, args.duration)
-        
-        # dictionary of the array that is returned by the service    
+
+        # dictionary of the array that is returned by the service
         # [0] 1376073600, # timestamp
         # [1] 4.2341864E7, # inactive + active page size + resident state size (total used)
         # [2] 1.34217728E8, # memory size at time
@@ -499,9 +500,9 @@ class CLI(object):
         # [6] 339968,
         # [7] 240588.8, # active page cache
         # [8] 1268249.6 # inactive page cache
-        
+
         try:
-            res = self.user.get(url)  
+            res = self.user.get(url)
             services_table = [ ['time', 'overage', 'unused', 'used', 'allocated'] ]
             for metric in res.items:
                 services_table.append([
@@ -938,7 +939,7 @@ class CLI(object):
             else:
                 branch = args.branch
                 # If we weren't passed a branch and don't have a
-                # default one, then get the current branch          
+                # default one, then get the current branch
                 if not branch:
                     get_local_branch = getattr(self,
                             'get_local_branch_{0}'.format(protocol), None)
