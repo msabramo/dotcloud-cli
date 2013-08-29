@@ -1,12 +1,11 @@
 import requests
 import json
 import sys
-import os
 import time
 
 from .auth import BasicAuth, OAuth2Auth, NullAuth
 from .response import *
-from .errors import RESTAPIError, AuthenticationNotConfigured
+from .errors import RESTAPIError
 
 
 class RESTClient(object):
@@ -29,6 +28,7 @@ class RESTClient(object):
                 debug=self.debug, user_agent=self._user_agent,
                 version_checker=self._version_checker)
         subclient.session = self.session
+        subclient.authenticator = self.authenticator
         return subclient
 
     def _make_session(self):
@@ -70,7 +70,7 @@ class RESTClient(object):
 
     def request(self, method, path, streaming=False, **kw):
         url = self.build_url(path)
-        self.authenticator.args_hook(kw)
+        kw = self.authenticator.args_hook(kw) or kw
 
         def do_request():
             return self.make_response(

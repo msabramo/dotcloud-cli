@@ -24,6 +24,7 @@ class BasicAuth(BaseAuth):
 
     def args_hook(self, args):
         args['auth'] = HTTPBasicAuth(self.username, self.password)
+        return args
 
 
 class OAuth2Auth(BaseAuth):

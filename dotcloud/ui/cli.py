@@ -23,7 +23,6 @@ import getpass
 import requests
 import urllib2
 import datetime
-import calendar
 import tempfile
 import stat
 import platform
@@ -365,7 +364,7 @@ class CLI(object):
                 'key': CLIENT_KEY, 'secret': CLIENT_SECRET}
             try:
                 token = self.authorize_client(urlmap.get('token'), credential, username, password)
-            except Exception as e:
+            except Exception:
                 self.die('Username and password do not match. Try again.')
             token['url'] = credential['token_url']
             config = GlobalConfig()
@@ -464,7 +463,7 @@ class CLI(object):
             return
         self.info('Destroying "{0}"'.format(to_destroy))
         try:
-            res = self.user.delete(url)
+            self.user.delete(url)
         except RESTAPIError as e:
             if e.code == 404:
                 self.die('The {0} "{1}" does not exist.'.format(what_destroy, to_destroy))
@@ -554,7 +553,7 @@ class CLI(object):
             self.user.patch(url, patch)
             deploy = True
         else:
-            self.die('Unknown sub command {0}'.format(subcmd), stderr=True)
+            self.die('Unknown sub command {0}'.format(args.subcmd), stderr=True)
         if deploy:
             self.deploy(args.application)
 
@@ -1045,7 +1044,7 @@ class CLI(object):
             instance_id = int(instance_id)
             if instance_id < 0:
                 raise ValueError('value should be >= 0')
-        except ValueError as e:
+        except ValueError:
             self.error('Invalid service instance identifier: {0}'.format(service_or_instance))
             self.info('Did you mean `{0} {1} -A {2} {3}` ?'.format(self.cmd, command, service_name, instance_id))
             self.die()
