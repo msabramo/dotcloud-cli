@@ -9,7 +9,7 @@ class BaseAuth(object):
     def pre_request_hook(self, request):
         pass
 
-    def response_hook(self, response):
+    def response_hook(self, session, response):
         pass
 
 
