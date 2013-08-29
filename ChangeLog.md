@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v0.9.7
+------
+
+- Added support for requests 1.1.0, 1.2.0
+- rsync should know display progress when uploading during `dotcloud push`.
+- Fixed bug: password prompt should not break anymore on Windows
+- Fixed bug with `--branch` argument when using git or hg to push
+
 v0.9.4
 ------
 
