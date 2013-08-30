@@ -100,7 +100,8 @@ class CLI(object):
         elif self.global_config.get('apikey'):
             access_key, secret = self.global_config.get('apikey').split(':')
             self.client.authenticator = BasicAuth(access_key, secret)
-            self.user.authenticator = self.client.authenticator
+            if getattr(self, 'user', None):
+                self.user.authenticator = self.client.authenticator
 
     def pre_refresh_token(self, req):
         self.info('Refreshing OAuth2 token...')
