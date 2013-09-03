@@ -2,6 +2,11 @@
 
 This is the dotCloud command line interface.
 
+## Python
+
+The CLI is tested against Python 2.6 and 2.7. Python 3.x is "try at
+your own risk" for now.
+
 ## What's New
 
 This version of CLI is designed to work with the application directory
