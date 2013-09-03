@@ -5,11 +5,11 @@ This is the dotCloud command line interface.
 ## What's New
 
 This version of CLI is designed to work with the application directory
-linked to thremote dotCloud application.
+linked to the remote dotCloud application.
 
 This allows you to avoid typing the same application names multiple
-times, and reduce the possiblity of making typos and overwrite wrong
-applications by repeating the command line history.
+times, and reduces the possiblity of making typos or overwriting the
+wrong applications by repeating the command line history.
 
     # New CLI 
     > dotcloud push
@@ -35,10 +35,9 @@ You're asked to provide your username and password for dotCloud, to
 register the new CLI client as a dotCloud REST API consumer. You can
 also use email, instead of your username.
 
-The CLI won't save this credentials locally - instead, it will save
-the OAuth2 access token in the local disk. Once the setup is complete,
-you can run the check command to see if everything is configured
-correctly.
+The CLI won't save these credentials locally, only the OAuth2 access
+token. Once the setup is complete, you can run the check command to
+see if everything is configured correctly.
 
     > dotcloud check
     --> Checking the authentication status
@@ -55,7 +54,7 @@ over from the setup.
 
 ### Create
 
-Once you've done writing your awesome application, run the `create` command:
+Once you're done writing your awesome application, run the `create` command:
 
     > dotcloud create myapp
     --> Creating a new application called "myapp"
@@ -112,4 +111,3 @@ If you really want to contribute your code by submitting patches (that
 is awesome!), fork a project on github, and send us a pull
 request. Note that by forking and sending pull requests, you agree to
 assign the copyright to dotCloud Inc.
-
