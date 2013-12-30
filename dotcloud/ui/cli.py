@@ -347,9 +347,15 @@ class CLI(object):
 
     def cmd_setup(self, args):
         if args.api_key:
-            # API Key
-            self.info('You can find your API key at https://account.dotcloud.com/settings/')
-            api_key = self.prompt('Please enter your API key')
+            if 'DOTCLOUD_API_KEY' in os.environ:
+                self.info('Using API key configured at environment variable'
+                          ' DOTCLOUD_API_KEY.')
+                api_key = os.environ['DOTCLOUD_API_KEY']
+            else:
+                # API Key
+                self.info('You can find your API key at https://account.dotcloud.com/settings/')
+                api_key = self.prompt('Please enter your API key')
+
             if not re.match('\w{20}:\w{40}', api_key):
                 self.die('Invalid API Key')
             config = GlobalConfig()
