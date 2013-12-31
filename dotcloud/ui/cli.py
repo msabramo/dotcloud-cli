@@ -278,9 +278,19 @@ class CLI(object):
         input = method(prompt + ': '.encode('ascii'))
         return input
 
-    def confirm(self, prompt, default='n'):
+    def confirm(self, args, prompt, default='n'):
         choice = ' [Y/n]' if default == 'y' else ' [y/N]'
-        input = raw_input(prompt + choice + ': ').lower()
+        text = prompt + choice + ': '
+
+        if args.assume_yes:
+            print text, 'Y'
+            return True
+
+        if args.assume_no:
+            print text, 'N'
+            return False
+
+        input = raw_input(text).lower()
         if input == '':
             input = default
         return re.match(r'^y(?:es)?$', input.strip(), re.IGNORECASE)
@@ -439,7 +449,7 @@ class CLI(object):
             else:
                 self.die('Creating application "{0}" failed: {1}'.format(args.application, e))
         self.success('Application "{0}" created.'.format(args.application))
-        if self.confirm('Connect the current directory to "{0}"?'.format(args.application), 'y'):
+        if self.confirm(args, 'Connect the current directory to "{0}"?'.format(args.application), 'y'):
             self._connect(args)
 
     def cmd_traffic(self, args):
@@ -548,7 +558,7 @@ class CLI(object):
             to_destroy = '{0}.{1}'.format(args.application, args.service)
             url = '/applications/{0}/services/{1}'.format(args.application, args.service)
 
-        if not self.confirm('Destroy the {0} "{1}"?'.format(what_destroy, to_destroy)):
+        if not self.confirm(args, 'Destroy the {0} "{1}"?'.format(what_destroy, to_destroy)):
             return
         self.info('Destroying "{0}"'.format(to_destroy))
         try:
@@ -907,7 +917,7 @@ class CLI(object):
                     "Are you sure you entered the correct directory path?".format(
                         args.path
                 )
-                if not self.confirm(question):
+                if not self.confirm(args, question):
                     self.die()
         else :
             if root is None :
@@ -916,7 +926,7 @@ class CLI(object):
                         "Are you sure you are in the correct directory?".format(
                             os.getcwd()
                     )
-                    if not self.confirm(question):
+                    if not self.confirm(args, question):
                         self.die()
             else :
                 if not os.path.exists(os.path.join(self.local_config_root, 'dotcloud.yml')):
@@ -926,7 +936,7 @@ class CLI(object):
                         "Continue?".format(
                         self.local_config_root
                     )
-                    if not self.confirm(question):
+                    if not self.confirm(args, question):
                         self.die()
 
     @app_local
@@ -1559,7 +1569,7 @@ class CLI(object):
             self.success("All the services are up to date in {0}".format(args.application))
             return
 
-        if upgrade and not args.dry_run and self.confirm("Upgrade {0}?".format(", ".join(upgrade))):
+        if upgrade and not args.dry_run and self.confirm(args, "Upgrade {0}?".format(", ".join(upgrade))):
             manual_upgrades = upgradeable - upgrade
             if len(upgrade) == 1:
                 single_service = upgrade.pop()
