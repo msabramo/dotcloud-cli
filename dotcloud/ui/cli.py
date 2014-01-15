@@ -1113,6 +1113,7 @@ class CLI(object):
         return [
             'ssh',
             '-i', self.global_config.key,
+            '-o', 'IdentitiesOnly=yes',
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'PasswordAuthentication=no',
             '-o', 'ServerAliveInterval=10',
