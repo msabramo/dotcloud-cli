@@ -191,6 +191,8 @@ def get_parser(name='dotcloud'):
             help='Path to the directory to push (by default "./")')
     push.add_argument('--clean', action='store_true',
             help='Do a full build (rather than incremental)')
+    push.add_argument('--verbose', action='store_true',
+            help='Provide verbose output during push')
     rsync_or_dvcs = push.add_mutually_exclusive_group()
     rsync_or_dvcs.add_argument('--rsync', action='store_true', help='Use rsync to push (default)')
     rsync_or_dvcs.add_argument('--git', action='store_true', help='Use git to push')
