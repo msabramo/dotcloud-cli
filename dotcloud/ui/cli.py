@@ -1067,7 +1067,9 @@ class CLI(object):
         excludes = ('*.pyc', '.git', '.hg')
         ignore_file = os.path.join(local_dir, '.dotcloudignore')
         ignore_opt = ('--exclude-from', ignore_file) if os.path.exists(ignore_file) else tuple()
-        rsync = ('rsync', '-lpthrvz', '--delete', '--safe-links', '--progress') + \
+        verbose_opt = ('--verbose', '--progress') if args.verbose else tuple()
+        rsync = ('rsync', '-lpthrz', '--delete', '--safe-links') + \
+                 verbose_opt + \
                  tuple('--exclude={0}'.format(e) for e in excludes) + \
                  ignore_opt + \
                  ('-e', ssh, local_dir,
