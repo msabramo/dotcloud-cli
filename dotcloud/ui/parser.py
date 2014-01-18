@@ -67,6 +67,11 @@ def get_parser(name='dotcloud'):
     common_parser.add_argument('--application', '-A', help='Specify the application')
     common_parser.add_argument('--debug', '-D', action='store_true',
             help='Enable debug messages (same as "export DOTCLOUD_DEBUG=true")')
+    common_parser.add_argument('--assume-yes', '-y', action='store_true',
+            help='Automatic yes to prompts; assume "yes" as answer to all prompts'
+                 ' and run non-interactively.')
+    common_parser.add_argument('--assume-no', '-o', action='store_true',
+            help='Automatic "no" to all prompts.')
 
     # The "connect" and "create" share some options, as "create" will
     # offer to connect the current directory to the new application.
